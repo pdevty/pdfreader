@@ -40,11 +40,10 @@ func min(a, b int) int {
 }
 func end(a []byte, n int) int { return max(0, len(a)-n) }
 func num(n string) int {
-  i, e := strconv.Atoi(n);
-  if e != nil {
-    return 0
+  if i, e := strconv.Atoi(n); e == nil {
+    return i
   }
-  return i;
+  return 0;
 }
 
 // xrefStart() queries the start of the xref-table in a PDF file.
@@ -320,14 +319,12 @@ func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
     m := res.MatchStrings(string(s));
     if m != nil {
       n = num(m[1]);
-      _, wrong := done[n];
-      if wrong {
+      if _, wrong := done[n]; wrong {
         return -1, _Bytes
       }
       done[n] = 1;
       n, s = object(pd.Xref, pd.Bin, n);
-      z, ok = pd.rcache[string(s)];
-      if !ok {
+      if z, ok = pd.rcache[string(s)]; !ok {
         goto redo
       }
       s = z;
@@ -364,20 +361,16 @@ func (pd *PdfReaderT) Pages() [][]byte {
   if pd.pages != nil {
     return pd.pages
   }
-  d := pd.Dic(pd.Trailer["/Root"]);
-  pages := pd.Dic(d["/Pages"]);
+  pages := pd.Dic(pd.Dic(pd.Trailer["/Root"])["/Pages"]);
   pd.pages = make([][]byte, pd.Num(pages["/Count"]));
   cp := 0;
   done := make(map[string]int);
   var q func(p [][]byte);
   q = func(p [][]byte) {
     for k := range p {
-      _, wrong := done[string(p[k])];
-      if !wrong {
+      if _, wrong := done[string(p[k])]; !wrong {
         done[string(p[k])] = 1;
-        d := pd.Dic(p[k]);
-        kids, ok := d["/Kids"];
-        if ok {
+        if kids, ok := pd.Dic(p[k])["/Kids"]; ok {
           q(pd.Arr(kids))
         } else {
           pd.pages[cp] = p[k];
@@ -392,12 +385,11 @@ func (pd *PdfReaderT) Pages() [][]byte {
 
 func (pd *PdfReaderT) Attribute(a string, src []byte) []byte {
   d := pd.Dic(src);
-  r, ok := d[a];
   done := make(map[string]int);
+  r, ok := d[a];
   for !ok {
     r, ok = d["/Parent"];
-    _, wrong := done[string(r)];
-    if wrong || !ok {
+    if _, wrong := done[string(r)]; wrong || !ok {
       return _Bytes
     }
     done[string(r)] = 1;
@@ -421,12 +413,10 @@ func Load(fn string) *PdfReaderT {
   r := new(PdfReaderT);
   r.File = fn;
   r.Bin = a;
-  r.Startxref = xrefStart(a);
-  if r.Startxref == -1 {
+  if r.Startxref = xrefStart(a); r.Startxref == -1 {
     return nil
   }
-  r.Xref = xrefRead(a, r.Startxref);
-  if r.Xref == nil {
+  if r.Xref = xrefRead(a, r.Startxref); r.Xref == nil {
     return nil
   }
   p, s := Token(&a, xrefSkip(a, r.Startxref));
@@ -434,8 +424,7 @@ func Load(fn string) *PdfReaderT {
     return nil
   }
   p, s = Token(&a, p);
-  r.Trailer = Dictionary(s);
-  if r.Trailer == nil {
+  if r.Trailer = Dictionary(s); r.Trailer == nil {
     return nil
   }
   r.rcache = make(map[string][]byte);

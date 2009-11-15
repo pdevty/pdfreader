@@ -10,6 +10,7 @@ import (
 const MAX_PDF_UPDATES = 1024
 const MAX_PDF_STRING = 1024
 const MAX_PDF_DICT = 1024 * 16
+const MAX_PDF_ARRAYSIZE = 1024
 
 // types
 type PdfReaderT struct {
@@ -20,6 +21,7 @@ type PdfReaderT struct {
   Trailer   map[string][]byte; // trailer dictionary of the file
   rcache    map[string][]byte; // resolver cache
   rncache   map[string]int;    // resolver cache (positions in file)
+  pages     [][]byte;          // pages cache
 }
 
 var _Bytes = []byte{}
@@ -199,6 +201,23 @@ func Dictionary(s []byte) map[string][]byte {
   return r;
 }
 
+// Array() extracts an array from PDF data.
+func Array(s []byte) [][]byte {
+  if len(s) < 2 || s[0] != '[' || s[len(s)-1] != ']' {
+    return nil
+  }
+  s = s[1 : len(s)-1];
+  r := make([][]byte, MAX_PDF_ARRAYSIZE);
+  b := 0;
+  for p := 0; p >= 0; b++ {
+    p, r[b] = Token(s, p)
+  }
+  if b == 1 {
+    return nil
+  }
+  return r[0 : b-1];
+}
+
 // xrefRead() reads the xref table(s) of a PDF file. This is not recursive
 // in favour of not to have to keep track of already used starting points
 // for xrefs.
@@ -315,6 +334,50 @@ func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
 func (pd *PdfReaderT) Obj(reference []byte) []byte {
   _, r := pd.Resolve(reference);
   return r;
+}
+
+func (pd *PdfReaderT) Num(reference []byte) int {
+  return num(string(pd.Obj(reference)))
+}
+
+func (pd *PdfReaderT) Dic(reference []byte) map[string][]byte {
+  return Dictionary(pd.Obj(reference))
+}
+
+func (pd *PdfReaderT) Arr(reference []byte) [][]byte {
+  return Array(pd.Obj(reference))
+}
+
+// pd.Pages() returns an array with references to the pages of the PDF.
+func (pd *PdfReaderT) Pages() [][]byte {
+  if pd.pages != nil {
+    return pd.pages
+  }
+  d := pd.Dic(pd.Trailer["/Root"]);
+  pages := pd.Dic(d["/Pages"]);
+  pd.pages = make([][]byte, pd.Num(pages["/Count"]));
+  cp := 0;
+  done := make(map[string]int);
+  var q func(p [][]byte);
+  q = func(p [][]byte) {
+    for k := range p {
+      _, wrong := done[string(p[k])];
+      if !wrong {
+        done[string(p[k])] = 1;
+        d := pd.Dic(p[k]);
+        kids, ok := d["/Kids"];
+        _ = kids;
+        if ok {
+          q(pd.Arr(kids))
+        } else {
+          pd.pages[cp] = p[k];
+          cp++;
+        }
+      }
+    }
+  };
+  q(pd.Arr(pages["/Kids"]));
+  return pd.pages;
 }
 
 // Load() loads a PDF file of a given name.

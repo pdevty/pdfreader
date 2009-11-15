@@ -6,9 +6,8 @@ import (
 )
 
 func main() {
-  pd := pdfread.Load("tvlvolltext.pdf"); // change to your file name here
+  pd := pdfread.Load("tvlvolltext.pdf");
   if pd != nil {
-    fmt.Printf("--%s--\n", pd.Obj(pd.Trailer["/Root"]));
-    fmt.Printf("--%s--\n", pd.Obj(pd.Trailer["/Root"]));
+    fmt.Printf("%d pages\n", len(pd.Pages()))
   }
 }

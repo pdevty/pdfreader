@@ -8,11 +8,11 @@ package main
 import (
   "os";
   "fmt";
-  "pdfread";
+  p "pdfread";
 )
 
 func main() {
-  pd := pdfread.Load(os.Args[1]);
+  pd := p.Load(os.Args[1]);
   if pd != nil {
     pg := pd.Pages();
     for k := range pg {

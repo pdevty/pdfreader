@@ -7,12 +7,14 @@ import (
 )
 
 // limits
+
 const MAX_PDF_UPDATES = 1024
 const MAX_PDF_STRING = 1024
 const MAX_PDF_DICT = 1024 * 16
 const MAX_PDF_ARRAYSIZE = 1024
 
 // types
+
 type PdfReaderT struct {
   File      string;            // name of the file
   Bin       []byte;            // contents of the file
@@ -39,43 +41,43 @@ func min(a, b int) int {
   return b;
 }
 func end(a []byte, n int) int { return max(0, len(a)-n) }
-func num(n string) int {
-  if i, e := strconv.Atoi(n); e == nil {
+func num(n []byte) int {
+  if i, e := strconv.Atoi(string(n)); e == nil {
     return i
   }
   return 0;
 }
 
-// xrefStart() queries the start of the xref-table in a PDF file.
 
 var xref = regexp.MustCompile(
   "startxref[\t ]*(\r?\n|\r)"
     "[\t ]*([0-9]+)[\t ]*(\r?\n|\r)"
     "[\t ]*%%EOF")
 
+// xrefStart() queries the start of the xref-table in a PDF file.
 func xrefStart(pdf []byte) int {
-  ps := xref.AllMatchesString(string(pdf[end(pdf, 1024):len(pdf)]), 0);
+  ps := xref.AllMatches(pdf[end(pdf, 1024):len(pdf)], 0);
   if ps == nil {
     return -1
   }
-  return num(xref.MatchStrings(ps[len(ps)-1])[2]);
+  return num(xref.MatchSlices(ps[len(ps)-1])[2]);
 }
 
-// xrefSkip() queries the start of the trailer for a (partial) xref-table.
 
 var sxrf = regexp.MustCompile(
   "^[\r\n\t ]*xref[\t ]*(\r?\n|\r)")
 var nxrf = regexp.MustCompile(
   "^[\t ]*([0-9]+)[\t ]+([0-9]+)[\t ]*(\r?\n|\r)")
 
+// xrefSkip() queries the start of the trailer for a (partial) xref-table.
 func xrefSkip(pdf []byte, xref int) int {
-  ps := sxrf.MatchStrings(string(pdf[xref:min(xref+100, len(pdf))]));
+  ps := sxrf.MatchSlices(pdf[xref:min(xref+100, len(pdf))]);
   if ps == nil {
     return -1
   }
   for {
     xref += len(ps[0]);
-    ps = nxrf.MatchStrings(string(pdf[xref:min(xref+100, len(pdf))]));
+    ps = nxrf.MatchSlices(pdf[xref:min(xref+100, len(pdf))]);
     if ps == nil {
       break
     }
@@ -137,7 +139,6 @@ func skipPdfComposite(pdf *[]byte, p int) int {
   return p;
 }
 
-// Token() separates a token from PDF input.
 
 var ptok = regexp.MustCompile(
   "^[\r\n\t ]*("
@@ -156,6 +157,7 @@ var ptok = regexp.MustCompile(
     "[A-Za-z][A-Za-z0-9]+" // keyword
     ")")
 
+// Token() separates a token from PDF input.
 func Token(pdf *[]byte, p int) (int, []byte) {
 redo:
   ps := ptok.Execute((*pdf)[p:len((*pdf))]);
@@ -223,12 +225,12 @@ func Array(s []byte) [][]byte {
   return r[0 : b-1];
 }
 
-// xrefRead() reads the xref table(s) of a PDF file. This is not recursive
-// in favour of not to have to keep track of already used starting points
-// for xrefs.
 
 var vals = regexp.MustCompile("^[^0-9]*([0-9]+)[\t ]+([0-9]+)[\r\n\t ]+")
 
+// xrefRead() reads the xref table(s) of a PDF file. This is not recursive
+// in favour of not to have to keep track of already used starting points
+// for xrefs.
 func xrefRead(pdf []byte, p int) map[int]int {
   var back [MAX_PDF_UPDATES]int;
   b := 0;
@@ -243,21 +245,21 @@ func xrefRead(pdf []byte, p int) map[int]int {
     }
     p, s = Token(&pdf, p);
     s, ok = Dictionary(s)["/Prev"];
-    p = num(string(s));
+    p = num(s);
   }
   r := make(map[int]int);
   for b != 0 {
     b--;
     p = back[b];
     for {
-      m := vals.MatchStrings(string(pdf[p : p+32]));
+      m := vals.MatchSlices(pdf[p : p+32]);
       if m == nil {
         break
       }
       p += len(m[0]);
       o := num(m[1]);
       for c := num(m[2]); c > 0; c-- {
-        m = vals.MatchStrings(string(pdf[p : p+20]));
+        m = vals.MatchSlices(pdf[p : p+20]);
         if m == nil {
           return nil
         }
@@ -274,9 +276,6 @@ func xrefRead(pdf []byte, p int) map[int]int {
   return r;
 }
 
-// object() extracts the top informations of a PDF "object". For streams
-// this would be the dictionary as bytes.  It also returns the position in
-// binary data where one has to continue to read for this "object".
 
 var obj = regexp.MustCompile("^[\r\n\t ]*"
   "([0-9]+)"
@@ -285,27 +284,30 @@ var obj = regexp.MustCompile("^[\r\n\t ]*"
   "[\r\n\t ]+"
   "obj")
 
+// object() extracts the top informations of a PDF "object". For streams
+// this would be the dictionary as bytes.  It also returns the position in
+// binary data where one has to continue to read for this "object".
 func object(xr map[int]int, pdf []byte, o int) (int, []byte) {
   p, ok := xr[o];
   if !ok {
     return -1, _Bytes
   }
-  m := obj.MatchStrings(string(pdf[p : p+64]));
+  m := obj.MatchSlices(pdf[p : p+64]);
   if m == nil || num(m[1]) != o {
     return -1, _Bytes
   }
   return Token(&pdf, p+len(m[0]));
 }
 
-// pd.Resolve() resolves a reference in the PDF file. You'll probably need
-// this method for reading streams only.
-var res = regexp.MustCompile("^[\r\n\t ]*"
+var res = regexp.MustCompile("^"
   "([0-9]+)"
   "[\r\n\t ]+"
   "[0-9]+"
   "[\r\n\t ]+"
   "R$")
 
+// pd.Resolve() resolves a reference in the PDF file. You'll probably need
+// this method for reading streams only.
 func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
   n := -1;
   if len(s) >= 5 && s[len(s)-1] == 'R' {
@@ -316,7 +318,7 @@ func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
     done := make(map[int]int);
     orig := s;
   redo:
-    m := res.MatchStrings(string(s));
+    m := res.MatchSlices(s);
     if m != nil {
       n = num(m[1]);
       if _, wrong := done[n]; wrong {
@@ -344,14 +346,17 @@ func (pd *PdfReaderT) Obj(reference []byte) []byte {
   return r;
 }
 
+// pd.Num() queries integer data from a reference.
 func (pd *PdfReaderT) Num(reference []byte) int {
-  return num(string(pd.Obj(reference)))
+  return num(pd.Obj(reference))
 }
 
+// pd.Dic() queries dictionary data from a reference.
 func (pd *PdfReaderT) Dic(reference []byte) map[string][]byte {
   return Dictionary(pd.Obj(reference))
 }
 
+// pd.Arr() queries array data from a reference.
 func (pd *PdfReaderT) Arr(reference []byte) [][]byte {
   return Array(pd.Obj(reference))
 }
@@ -383,6 +388,9 @@ func (pd *PdfReaderT) Pages() [][]byte {
   return pd.pages;
 }
 
+// pd.Attribute() tries to get an attribute definition from a page
+// reference.  Note that the attribute definition is not resolved - so it's
+// possible to get back a reference here.
 func (pd *PdfReaderT) Attribute(a string, src []byte) []byte {
   d := pd.Dic(src);
   done := make(map[string]int);
@@ -399,6 +407,8 @@ func (pd *PdfReaderT) Attribute(a string, src []byte) []byte {
   return r;
 }
 
+// pd.Attribute() tries to get an attribute from a page reference.  The
+// attribute will be resolved.
 func (pd *PdfReaderT) Att(a string, src []byte) []byte {
   return pd.Obj(pd.Attribute(a, src))
 }
@@ -406,7 +416,6 @@ func (pd *PdfReaderT) Att(a string, src []byte) []byte {
 // Load() loads a PDF file of a given name.
 func Load(fn string) *PdfReaderT {
   a, e := io.ReadFile(fn);
-  //  fmt.Printf("Here we do have it!\n");
   if e != nil {
     return nil
   }

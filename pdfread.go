@@ -381,6 +381,8 @@ func (pd *PdfReaderT) Pages() [][]byte {
           pd.pages[cp] = p[k];
           cp++;
         }
+      } else {
+        panic("Bad Page-Tree!")
       }
     }
   };

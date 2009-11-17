@@ -144,7 +144,7 @@ var ptok = regexp.MustCompile(
   "^[\r\n\t ]*("
     "([0-9]+)([\r\n\t ]+([0-9]+)[\r\n\t ]+R)?" // object reference or number
     "|"
-    "/[A-Za-z0-9]+" // dictionary key
+    "/[^<>()\\[\\]/% \r\n\t]+" // dictionary key
     "|"
     "<" // hex string or dictionary
     "|"
@@ -154,7 +154,7 @@ var ptok = regexp.MustCompile(
     "|"
     "%[^\r\n]+[\r\n]" // comment
     "|"
-    "[A-Za-z][A-Za-z0-9]+" // keyword
+    "[A-Za-z][A-Za-z0-9]*" // keyword
     ")")
 
 // Token() separates a token from PDF input.
@@ -414,6 +414,16 @@ func (pd *PdfReaderT) Attribute(a string, src []byte) []byte {
 func (pd *PdfReaderT) Att(a string, src []byte) []byte {
   return pd.Obj(pd.Attribute(a, src))
 }
+
+// pd.PageFonts() returns references to the fonts defined for a page.
+func (pd *PdfReaderT) PageFonts(page []byte) map[string][]byte {
+  fonts, _ := pd.Dic(pd.Attribute("/Resources", page))["/Font"];
+  if fonts == nil {
+    return nil
+  }
+  return pd.Dic(fonts);
+}
+
 
 // Load() loads a PDF file of a given name.
 func Load(fn string) *PdfReaderT {

@@ -4,6 +4,8 @@ import (
   "io";
   "regexp";
   "strconv";
+  "bytes";
+  "compress/zlib";
 )
 
 // limits
@@ -361,6 +363,16 @@ func (pd *PdfReaderT) Arr(reference []byte) [][]byte {
   return Array(pd.Obj(reference))
 }
 
+// pd.ForcedArray() queries array data. If reference does not refer to an
+// array, reference is taken as element of the returned array.
+func (pd *PdfReaderT) ForcedArray(reference []byte) [][]byte {
+  nr := pd.Obj(reference);
+  if nr[0] != '[' {
+    return [][]byte{reference}
+  }
+  return Array(nr);
+}
+
 // pd.Pages() returns an array with references to the pages of the PDF.
 func (pd *PdfReaderT) Pages() [][]byte {
   if pd.pages != nil {
@@ -413,6 +425,54 @@ func (pd *PdfReaderT) Attribute(a string, src []byte) []byte {
 // attribute will be resolved.
 func (pd *PdfReaderT) Att(a string, src []byte) []byte {
   return pd.Obj(pd.Attribute(a, src))
+}
+
+// pd.Stream() returns contents of a stream.
+func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
+  q, d := pd.Resolve(reference);
+  dic := pd.Dic(d);
+  var t []byte;
+  q, t = Token(&pd.Bin, q);
+  if string(t) != "stream" {
+    return nil, []byte{}
+  }
+K:
+  for {
+    switch pd.Bin[q] {
+    case 9, 32:
+      q++
+    case 10:
+      q++;
+      break K;
+    case 13:
+      q++;
+      if pd.Bin[q] == 10 {
+        q++
+      }
+      break K;
+    }
+  }
+  return dic, pd.Bin[q : q+pd.Num(dic["/Length"])];
+}
+
+// pd.DecodedStream() returns decoded contents of a stream.
+func (pd *PdfReaderT) DecodedStream(reference []byte) (map[string][]byte, []byte) {
+  dic, data := pd.Stream(reference);
+  f, ok := dic["/Filter"];
+  if ok {
+    filter := pd.ForcedArray(f);
+    for ff := range filter {
+      switch string(filter[ff]) {
+      case "/FlateDecode":
+        inf, _ := zlib.NewInflater(bytes.NewBuffer(data));
+        data, _ = io.ReadAll(inf);
+        inf.Close();
+      default:
+        data = []byte{}
+      }
+    }
+  }
+  return dic, data;
 }
 
 // pd.PageFonts() returns references to the fonts defined for a page.

@@ -1,6 +1,7 @@
 package pdfread
 
 import (
+  "os";
   "io";
   "regexp";
   "strconv";
@@ -20,6 +21,7 @@ const MAX_PDF_ARRAYSIZE = 1024
 type PdfReaderT struct {
   File      string;            // name of the file
   Bin       []byte;            // contents of the file
+  rdr       *SliceReader;      // reader for the contents
   Startxref int;               // starting of xref table
   Xref      map[int]int;       // "pointers" of the xref table
   Trailer   map[string][]byte; // trailer dictionary of the file
@@ -50,6 +52,188 @@ func num(n []byte) int {
   return 0;
 }
 
+
+// ------------------- NEW PARTS -------------------------
+
+type SliceReader struct {
+  bin []byte;
+  pos int64;
+}
+
+func (sl *SliceReader) ReadAt(b []byte, off int64) (n int, err os.Error) {
+  for n := 0; n < len(b); n++ {
+    if off >= int64(len(sl.bin)) {
+      if n > 0 {
+        break
+      }
+      return n, os.EOF;
+    }
+    b[n] = sl.bin[off];
+    off++;
+  }
+  return len(b), nil;
+}
+
+func (sl *SliceReader) Read(b []byte) (n int, err os.Error) {
+  n, err = sl.ReadAt(b, sl.pos);
+  sl.pos += int64(n);
+  return;
+}
+
+func (sl *SliceReader) Seek(off int64, whence int) (ret int64, err os.Error) {
+  ret = sl.pos;
+  switch whence {
+  case 0:
+    sl.pos = 0
+  case 2:
+    sl.pos = int64(len(sl.bin))
+  }
+  sl.pos += off;
+  return;
+}
+
+func (sl *SliceReader) Size() int64 { return int64(len(sl.bin)) }
+
+func (sl *SliceReader) ReadByte() (c byte, err os.Error) {
+  if sl.pos < int64(len(sl.bin)) {
+    c = sl.bin[sl.pos];
+    sl.pos++;
+  } else {
+    err = os.EOF
+  }
+  return;
+}
+
+func (sl *SliceReader) UnreadByte() os.Error {
+  sl.pos--;
+  return nil;
+}
+
+func NewSliceReader(bin []byte) *SliceReader {
+  r := new(SliceReader);
+  r.bin = bin;
+  return r;
+}
+
+// ---------
+
+func skipSpaces(f *SliceReader) byte {
+  for {
+    c, err := f.ReadByte();
+    if err != nil {
+      break
+    }
+    if c > 32 {
+      return c
+    }
+  }
+  return 0;
+}
+
+func skipToDelim(f *SliceReader) byte {
+  for {
+    c, err := f.ReadByte();
+    if err != nil {
+      break
+    }
+    if c < 33 {
+      return c
+    }
+    switch c {
+    case '<', '>', '(', ')', '[', ']', '/', '%':
+      return c
+    }
+  }
+  return 255;
+}
+
+func skipString(f *SliceReader) {
+  for depth := 1; depth > 0; {
+    c, err := f.ReadByte();
+    if err != nil {
+      break
+    }
+    switch c {
+    case '(':
+      depth++
+    case ')':
+      depth--
+    case '\\':
+      f.ReadByte()
+    }
+  }
+}
+
+func skipComment(f *SliceReader) {
+  for {
+    c, err := f.ReadByte();
+    if err != nil || c == 13 || c == 10 {
+      break
+    }
+  }
+}
+
+func skipComposite(f *SliceReader) {
+  for depth := 1; depth > 0; {
+    switch skipToDelim(f) {
+    case '<', '[':
+      depth++
+    case '>', ']':
+      depth--
+    case '(':
+      skipString(f)
+    case '%':
+      skipComment(f)
+    }
+  }
+}
+
+func fpos(f *SliceReader) int64 {
+  r, _ := f.Seek(0, 1);
+  return r;
+}
+
+func simpleToken(f *SliceReader) ([]byte, int64) {
+again:
+  c := skipSpaces(f);
+  if c == 0 {
+    return _Bytes, -1
+  }
+  p := fpos(f) - 1;
+  switch c {
+  case '%':
+    skipComment(f);
+    goto again;
+  case '<', '[':
+    skipComposite(f)
+  case '(':
+    skipString(f)
+  default:
+    if skipToDelim(f) != 255 {
+      f.UnreadByte()
+    }
+  }
+  r := make([]byte, fpos(f)-p);
+  f.ReadAt(r, p);
+  return r, p;
+}
+
+func refToken(f *SliceReader) ([]byte, int64) {
+  tok, p := simpleToken(f);
+  if len(tok) > 0 && tok[0] >= '0' && tok[0] <= '9' {
+    simpleToken(f);
+    r, q := simpleToken(f);
+    if string(r) == "R" {
+      tok = make([]byte, 1+q-p);
+      f.ReadAt(tok, p);
+    } else {
+      f.Seek(p+int64(len(tok)), 0)
+    }
+  }
+  return tok, p;
+}
+
+// ----------------------- OLD PARTS ------------------------------
 
 var xref = regexp.MustCompile(
   "startxref[\t ]*(\r?\n|\r)"
@@ -141,7 +325,6 @@ func skipPdfComposite(pdf *[]byte, p int) int {
   return p;
 }
 
-
 var ptok = regexp.MustCompile(
   "^[\r\n\t ]*("
     "([0-9]+)([\r\n\t ]+([0-9]+)[\r\n\t ]+R)?" // object reference or number
@@ -192,19 +375,17 @@ func Dictionary(s []byte) map[string][]byte {
     return nil
   }
   r := make(map[string][]byte);
-  s = s[2 : e-1];
-  p := 0;
+  rdr := NewSliceReader(s[2 : e-1]);
   for {
-    t := _Bytes;
-    p, t = Token(&s, p);
-    if p < 0 {
+    t, _ := simpleToken(rdr);
+    if len(t) == 0 {
       break
     }
-    k := string(t);
-    p, t = Token(&s, p);
-    if k[0] != '/' || p < 0 {
+    if t[0] != '/' {
       return nil
     }
+    k := string(t);
+    t, _ = refToken(rdr);
     r[k] = t;
   }
   return r;
@@ -215,16 +396,20 @@ func Array(s []byte) [][]byte {
   if len(s) < 2 || s[0] != '[' || s[len(s)-1] != ']' {
     return nil
   }
-  s = s[1 : len(s)-1];
+  rdr := NewSliceReader(s[1 : len(s)-1]);
   r := make([][]byte, MAX_PDF_ARRAYSIZE);
   b := 0;
-  for p := 0; p >= 0; b++ {
-    p, r[b] = Token(&s, p)
+  for {
+    r[b], _ = refToken(rdr);
+    if len(r[b]) == 0 {
+      break
+    }
+    b++;
   }
-  if b == 1 {
+  if b == 0 {
     return nil
   }
-  return r[0 : b-1];
+  return r[0:b];
 }
 
 
@@ -289,7 +474,9 @@ var obj = regexp.MustCompile("^[\r\n\t ]*"
 // object() extracts the top informations of a PDF "object". For streams
 // this would be the dictionary as bytes.  It also returns the position in
 // binary data where one has to continue to read for this "object".
-func object(xr map[int]int, pdf []byte, o int) (int, []byte) {
+func (pd *PdfReaderT) object(o int) (int, []byte) {
+  pdf := pd.Bin;
+  xr := pd.Xref;
   p, ok := xr[o];
   if !ok {
     return -1, _Bytes
@@ -298,7 +485,11 @@ func object(xr map[int]int, pdf []byte, o int) (int, []byte) {
   if m == nil || num(m[1]) != o {
     return -1, _Bytes
   }
-  return Token(&pdf, p+len(m[0]));
+
+  pd.rdr.Seek(int64(p+len(m[0])), 0);
+  r, np := refToken(pd.rdr);
+
+  return int(np) + len(r), r;
 }
 
 var res = regexp.MustCompile("^"
@@ -327,7 +518,7 @@ func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
         return -1, _Bytes
       }
       done[n] = 1;
-      n, s = object(pd.Xref, pd.Bin, n);
+      n, s = pd.object(n);
       if z, ok = pd.rcache[string(s)]; !ok {
         goto redo
       }
@@ -510,5 +701,6 @@ func Load(fn string) *PdfReaderT {
   }
   r.rcache = make(map[string][]byte);
   r.rncache = make(map[string]int);
+  r.rdr = NewSliceReader(r.Bin);
   return r;
 }

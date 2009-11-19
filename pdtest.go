@@ -8,11 +8,11 @@ package main
 import (
   "os";
   "fmt";
-  p "pdfread";
+  "pdfread";
 )
 
 func main() {
-  pd := p.Load(os.Args[1]);
+  pd := pdfread.Load(os.Args[1]);
   if pd != nil {
     pg := pd.Pages();
     for k := range pg {
@@ -26,12 +26,12 @@ func main() {
       }
     }
 
-/* To test PDF streams:
+    /* To test PDF streams:
 
-    cont := pd.ForcedArray(pd.Dic(pg[0])["/Contents"]);
-    _, ps := pd.DecodedStream(cont[0]);
-    fmt.Printf("Length of stream: %d\n%v", len(ps),
-      string(ps));
-*/
+       cont := pd.ForcedArray(pd.Dic(pg[0])["/Contents"]);
+       _, ps := pd.DecodedStream(cont[0]);
+       fmt.Printf("Length of stream: %d\n%v", len(ps),
+         string(ps));
+    */
   }
 }

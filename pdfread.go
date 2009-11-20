@@ -1,12 +1,13 @@
 package pdfread
 
 import (
-  "os";
+  //  "fmt";
   "io";
   "regexp";
   "strconv";
   "bytes";
   "compress/zlib";
+  "fancy";
 )
 
 // limits
@@ -21,7 +22,7 @@ const MAX_PDF_ARRAYSIZE = 1024
 type PdfReaderT struct {
   File      string;            // name of the file
   Bin       []byte;            // contents of the file
-  rdr       *SliceReader;      // reader for the contents
+  rdr       fancy.Reader;      // reader for the contents
   Startxref int;               // starting of xref table
   Xref      map[int]int;       // "pointers" of the xref table
   Trailer   map[string][]byte; // trailer dictionary of the file
@@ -52,71 +53,7 @@ func num(n []byte) int {
   return 0;
 }
 
-// -----------
-
-type SliceReader struct {
-  bin []byte;
-  pos int64;
-}
-
-func (sl *SliceReader) ReadAt(b []byte, off int64) (n int, err os.Error) {
-  for n := 0; n < len(b); n++ {
-    if off >= int64(len(sl.bin)) {
-      if n > 0 {
-        break
-      }
-      return n, os.EOF;
-    }
-    b[n] = sl.bin[off];
-    off++;
-  }
-  return len(b), nil;
-}
-
-func (sl *SliceReader) Read(b []byte) (n int, err os.Error) {
-  n, err = sl.ReadAt(b, sl.pos);
-  sl.pos += int64(n);
-  return;
-}
-
-func (sl *SliceReader) Seek(off int64, whence int) (ret int64, err os.Error) {
-  ret = sl.pos;
-  switch whence {
-  case 0:
-    sl.pos = 0
-  case 2:
-    sl.pos = int64(len(sl.bin))
-  }
-  sl.pos += off;
-  return;
-}
-
-func (sl *SliceReader) Size() int64 { return int64(len(sl.bin)) }
-
-func (sl *SliceReader) ReadByte() (c byte, err os.Error) {
-  if sl.pos < int64(len(sl.bin)) {
-    c = sl.bin[sl.pos];
-    sl.pos++;
-  } else {
-    err = os.EOF
-  }
-  return;
-}
-
-func (sl *SliceReader) UnreadByte() os.Error {
-  sl.pos--;
-  return nil;
-}
-
-func NewSliceReader(bin []byte) *SliceReader {
-  r := new(SliceReader);
-  r.bin = bin;
-  return r;
-}
-
-// ---------
-
-func skipLE(f *SliceReader) {
+func skipLE(f fancy.Reader) {
   for {
     c, err := f.ReadByte();
     if err != nil {
@@ -139,7 +76,7 @@ func skipLE(f *SliceReader) {
   }
 }
 
-func skipSpaces(f *SliceReader) byte {
+func skipSpaces(f fancy.Reader) byte {
   for {
     c, err := f.ReadByte();
     if err != nil {
@@ -152,7 +89,7 @@ func skipSpaces(f *SliceReader) byte {
   return 0;
 }
 
-func skipToDelim(f *SliceReader) byte {
+func skipToDelim(f fancy.Reader) byte {
   for {
     c, err := f.ReadByte();
     if err != nil {
@@ -169,7 +106,7 @@ func skipToDelim(f *SliceReader) byte {
   return 255;
 }
 
-func skipString(f *SliceReader) {
+func skipString(f fancy.Reader) {
   for depth := 1; depth > 0; {
     c, err := f.ReadByte();
     if err != nil {
@@ -186,7 +123,7 @@ func skipString(f *SliceReader) {
   }
 }
 
-func skipComment(f *SliceReader) {
+func skipComment(f fancy.Reader) {
   for {
     c, err := f.ReadByte();
     if err != nil || c == 13 || c == 10 {
@@ -195,7 +132,7 @@ func skipComment(f *SliceReader) {
   }
 }
 
-func skipComposite(f *SliceReader) {
+func skipComposite(f fancy.Reader) {
   for depth := 1; depth > 0; {
     switch skipToDelim(f) {
     case '<', '[':
@@ -210,12 +147,12 @@ func skipComposite(f *SliceReader) {
   }
 }
 
-func fpos(f *SliceReader) int64 {
+func fpos(f fancy.Reader) int64 {
   r, _ := f.Seek(0, 1);
   return r;
 }
 
-func simpleToken(f *SliceReader) ([]byte, int64) {
+func simpleToken(f fancy.Reader) ([]byte, int64) {
 again:
   c := skipSpaces(f);
   if c == 0 {
@@ -240,7 +177,7 @@ again:
   return r, p;
 }
 
-func refToken(f *SliceReader) ([]byte, int64) {
+func refToken(f fancy.Reader) ([]byte, int64) {
   tok, p := simpleToken(f);
   if len(tok) > 0 && tok[0] >= '0' && tok[0] <= '9' {
     simpleToken(f);
@@ -255,10 +192,10 @@ func refToken(f *SliceReader) ([]byte, int64) {
   return tok, p;
 }
 
-func tupel(f *SliceReader, count int) [][]byte {
+func tupel(f fancy.Reader, count int) [][]byte {
   r := make([][]byte, count);
   for i := 0; i < count; i++ {
-    r[i], _ = simpleToken(f);
+    r[i], _ = simpleToken(f)
   }
   return r;
 }
@@ -269,7 +206,7 @@ var xref = regexp.MustCompile(
     "[\t ]*%%EOF")
 
 // xrefStart() queries the start of the xref-table in a PDF file.
-func xrefStart(f *SliceReader) int {
+func xrefStart(f fancy.Reader) int {
   s := int(f.Size());
   pdf := make([]byte, min(s, 1024));
   f.ReadAt(pdf, int64(max(0, s-1024)));
@@ -282,19 +219,21 @@ func xrefStart(f *SliceReader) int {
 
 // xrefSkip() queries the start of the trailer for a (partial) xref-table.
 func xrefSkip(pdf []byte, xref int) int {
-  f := NewSliceReader(pdf);
+  f := fancy.SliceReader(pdf);
   f.Seek(int64(xref), 0);
   t, p := simpleToken(f);
-  if string(t) != "xref" { return -1 }
+  if string(t) != "xref" {
+    return -1
+  }
   for {
     t, p = simpleToken(f);
     if t[0] < '0' || t[0] > '9' {
       f.Seek(p, 0);
-      break
+      break;
     }
     t, _ = simpleToken(f);
     skipLE(f);
-    f.Seek(int64(num(t) * 20), 1);
+    f.Seek(int64(num(t)*20), 1);
   }
   return int(fpos(f));
 }
@@ -309,7 +248,7 @@ func Dictionary(s []byte) map[string][]byte {
     return nil
   }
   r := make(map[string][]byte);
-  rdr := NewSliceReader(s[2 : e-1]);
+  rdr := fancy.SliceReader(s[2 : e-1]);
   for {
     t, _ := simpleToken(rdr);
     if len(t) == 0 {
@@ -330,7 +269,7 @@ func Array(s []byte) [][]byte {
   if len(s) < 2 || s[0] != '[' || s[len(s)-1] != ']' {
     return nil
   }
-  rdr := NewSliceReader(s[1 : len(s)-1]);
+  rdr := fancy.SliceReader(s[1 : len(s)-1]);
   r := make([][]byte, MAX_PDF_ARRAYSIZE);
   b := 0;
   for {
@@ -350,7 +289,7 @@ func Array(s []byte) [][]byte {
 // in favour of not to have to keep track of already used starting points
 // for xrefs.
 func xrefRead(pdf []byte, p int) map[int]int {
-  f := NewSliceReader(pdf);
+  f := fancy.SliceReader(pdf);
   var back [MAX_PDF_UPDATES]int;
   b := 0;
   s := _Bytes;
@@ -546,7 +485,7 @@ func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
   }
   skipLE(pd.rdr);
   q = int(fpos(pd.rdr));
-  return dic, pd.Bin[q : q+pd.Num(dic["/Length"])];  // FIXME
+  return dic, pd.Bin[q : q+pd.Num(dic["/Length"])]; // FIXME
 }
 
 // pd.DecodedStream() returns decoded contents of a stream.
@@ -582,19 +521,21 @@ func (pd *PdfReaderT) PageFonts(page []byte) map[string][]byte {
 // Load() loads a PDF file of a given name.
 func Load(fn string) *PdfReaderT {
   a, e := io.ReadFile(fn);
+  //  fmt.Printf("Here it is!\n");
   if e != nil {
     return nil
   }
   r := new(PdfReaderT);
   r.File = fn;
   r.Bin = a;
-  r.rdr = NewSliceReader(r.Bin);
+  r.rdr = fancy.SliceReader(r.Bin);
   if r.Startxref = xrefStart(r.rdr); r.Startxref == -1 {
     return nil
   }
   if r.Xref = xrefRead(a, r.Startxref); r.Xref == nil {
     return nil
   }
+  //  fmt.Printf("Here is the xref!\n");
   r.rdr.Seek(int64(xrefSkip(a, r.Startxref)), 0);
   s, _ := simpleToken(r.rdr);
   if string(s) != "trailer" {

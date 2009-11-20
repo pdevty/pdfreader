@@ -52,8 +52,7 @@ func num(n []byte) int {
   return 0;
 }
 
-
-// ------------------- NEW PARTS -------------------------
+// -----------
 
 type SliceReader struct {
   bin []byte;
@@ -116,6 +115,29 @@ func NewSliceReader(bin []byte) *SliceReader {
 }
 
 // ---------
+
+func skipLE(f *SliceReader) {
+  for {
+    c, err := f.ReadByte();
+    if err != nil {
+      return
+    }
+    if c > 32 {
+      f.UnreadByte();
+      return;
+    }
+    if c == 13 {
+      c, err = f.ReadByte();
+      if err == nil && c != 10 {
+        f.UnreadByte()
+      }
+      return;
+    }
+    if c == 10 {
+      return
+    }
+  }
+}
 
 func skipSpaces(f *SliceReader) byte {
   for {
@@ -233,7 +255,13 @@ func refToken(f *SliceReader) ([]byte, int64) {
   return tok, p;
 }
 
-// ----------------------- OLD PARTS ------------------------------
+func tupel(f *SliceReader, count int) [][]byte {
+  r := make([][]byte, count);
+  for i := 0; i < count; i++ {
+    r[i], _ = simpleToken(f);
+  }
+  return r;
+}
 
 var xref = regexp.MustCompile(
   "startxref[\t ]*(\r?\n|\r)"
@@ -241,128 +269,34 @@ var xref = regexp.MustCompile(
     "[\t ]*%%EOF")
 
 // xrefStart() queries the start of the xref-table in a PDF file.
-func xrefStart(pdf []byte) int {
-  ps := xref.AllMatches(pdf[end(pdf, 1024):len(pdf)], 0);
+func xrefStart(f *SliceReader) int {
+  s := int(f.Size());
+  pdf := make([]byte, min(s, 1024));
+  f.ReadAt(pdf, int64(max(0, s-1024)));
+  ps := xref.AllMatches(pdf, 0);
   if ps == nil {
     return -1
   }
   return num(xref.MatchSlices(ps[len(ps)-1])[2]);
 }
 
-
-var sxrf = regexp.MustCompile(
-  "^[\r\n\t ]*xref[\t ]*(\r?\n|\r)")
-var nxrf = regexp.MustCompile(
-  "^[\t ]*([0-9]+)[\t ]+([0-9]+)[\t ]*(\r?\n|\r)")
-
 // xrefSkip() queries the start of the trailer for a (partial) xref-table.
 func xrefSkip(pdf []byte, xref int) int {
-  ps := sxrf.MatchSlices(pdf[xref:min(xref+100, len(pdf))]);
-  if ps == nil {
-    return -1
-  }
+  f := NewSliceReader(pdf);
+  f.Seek(int64(xref), 0);
+  t, p := simpleToken(f);
+  if string(t) != "xref" { return -1 }
   for {
-    xref += len(ps[0]);
-    ps = nxrf.MatchSlices(pdf[xref:min(xref+100, len(pdf))]);
-    if ps == nil {
+    t, p = simpleToken(f);
+    if t[0] < '0' || t[0] > '9' {
+      f.Seek(p, 0);
       break
     }
-    xref += num(ps[2]) * 20;
+    t, _ = simpleToken(f);
+    skipLE(f);
+    f.Seek(int64(num(t) * 20), 1);
   }
-  return xref;
-}
-
-// skipPdfString() skips over a string in PDF input.
-func skipPdfString(pdf *[]byte, p int) int {
-  if (*pdf)[p] != '(' {
-    return -1
-  }
-  dc := MAX_PDF_STRING;
-  for d := 1; d > 0 && dc > 0; dc-- {
-    p++;
-    switch (*pdf)[p] {
-    case '\\':
-      p++
-    case '(':
-      d++
-    case ')':
-      d--
-    }
-  }
-  if dc <= 0 {
-    return -1
-  }
-  return p;
-}
-
-// skipPdfComposite() skips over composite data. This is very forgiving about
-// errors.
-func skipPdfComposite(pdf *[]byte, p int) int {
-  if (*pdf)[p] == '(' {
-    return skipPdfString(pdf, p)
-  }
-  if (*pdf)[p] != '<' && (*pdf)[p] != '[' {
-    return -1
-  }
-  dc := MAX_PDF_DICT;
-  for d := 1; d > 0 && dc > 0; dc-- {
-    p++;
-    switch (*pdf)[p] {
-    case '[', '<':
-      d++
-    case ']', '>':
-      d--
-    case '(':
-      p = skipPdfString(pdf, p);
-      if p == -1 {
-        return -1
-      }
-    }
-  }
-  if dc <= 0 {
-    return -1
-  }
-  return p;
-}
-
-var ptok = regexp.MustCompile(
-  "^[\r\n\t ]*("
-    "([0-9]+)([\r\n\t ]+([0-9]+)[\r\n\t ]+R)?" // object reference or number
-    "|"
-    "/[^<>()\\[\\]/% \r\n\t]+" // dictionary key
-    "|"
-    "<" // hex string or dictionary
-    "|"
-    "[" // array
-    "|"
-    "[(]" // string
-    "|"
-    "%[^\r\n]+[\r\n]" // comment
-    "|"
-    "[A-Za-z][A-Za-z0-9]*" // keyword
-    ")")
-
-// Token() separates a token from PDF input.
-func Token(pdf *[]byte, p int) (int, []byte) {
-redo:
-  ps := ptok.Execute((*pdf)[p:len((*pdf))]);
-  if ps == nil {
-    return -1, _Bytes
-  }
-  q := p + ps[1];
-  s := (*pdf)[p+ps[2] : q];
-  switch s[0] {
-  case '%':
-    p = q;
-    goto redo;
-  case '<', '[', '(':
-    q = skipPdfComposite(pdf, p+ps[2]) + 1;
-    if q == -1 {
-      return -1, _Bytes
-    }
-    s = (*pdf)[p+ps[2] : q];
-  }
-  return q, s;
+  return int(fpos(f));
 }
 
 // Dictionary() makes a map/hash from PDF dictionary data.
@@ -412,13 +346,11 @@ func Array(s []byte) [][]byte {
   return r[0:b];
 }
 
-
-var vals = regexp.MustCompile("^[^0-9]*([0-9]+)[\t ]+([0-9]+)[\r\n\t ]+")
-
 // xrefRead() reads the xref table(s) of a PDF file. This is not recursive
 // in favour of not to have to keep track of already used starting points
 // for xrefs.
 func xrefRead(pdf []byte, p int) map[int]int {
+  f := NewSliceReader(pdf);
   var back [MAX_PDF_UPDATES]int;
   b := 0;
   s := _Bytes;
@@ -426,36 +358,33 @@ func xrefRead(pdf []byte, p int) map[int]int {
     back[b] = p;
     b++;
     p = xrefSkip(pdf, p);
-    p, s = Token(&pdf, p);
+    f.Seek(int64(p), 0);
+    s, _ = simpleToken(f);
     if string(s) != "trailer" {
       return nil
     }
-    p, s = Token(&pdf, p);
+    s, _ = simpleToken(f);
     s, ok = Dictionary(s)["/Prev"];
     p = num(s);
   }
   r := make(map[int]int);
   for b != 0 {
     b--;
-    p = back[b];
+    f.Seek(int64(back[b]), 0);
+    simpleToken(f); // skip "xref"
     for {
-      m := vals.MatchSlices(pdf[p : p+32]);
-      if m == nil {
+      m := tupel(f, 2);
+      if string(m[0]) == "trailer" {
         break
       }
-      p += len(m[0]);
-      o := num(m[1]);
-      for c := num(m[2]); c > 0; c-- {
-        m = vals.MatchSlices(pdf[p : p+20]);
-        if m == nil {
-          return nil
-        }
-        if pdf[p+len(m[0])] != 'n' {
+      o := num(m[0]);
+      for c := num(m[1]); c > 0; c-- {
+        m = tupel(f, 3);
+        if m[2][0] != 'n' {
           r[o] = 0, false
         } else {
-          r[o] = num(m[1])
+          r[o] = num(m[0])
         }
-        p += 20;
         o++;
       }
     }
@@ -463,32 +392,20 @@ func xrefRead(pdf []byte, p int) map[int]int {
   return r;
 }
 
-
-var obj = regexp.MustCompile("^[\r\n\t ]*"
-  "([0-9]+)"
-  "[\r\n\t ]+"
-  "[0-9]+"
-  "[\r\n\t ]+"
-  "obj")
-
 // object() extracts the top informations of a PDF "object". For streams
 // this would be the dictionary as bytes.  It also returns the position in
 // binary data where one has to continue to read for this "object".
 func (pd *PdfReaderT) object(o int) (int, []byte) {
-  pdf := pd.Bin;
-  xr := pd.Xref;
-  p, ok := xr[o];
+  p, ok := pd.Xref[o];
   if !ok {
     return -1, _Bytes
   }
-  m := obj.MatchSlices(pdf[p : p+64]);
-  if m == nil || num(m[1]) != o {
+  pd.rdr.Seek(int64(p), 0);
+  m := tupel(pd.rdr, 3);
+  if num(m[0]) != o {
     return -1, _Bytes
   }
-
-  pd.rdr.Seek(int64(p+len(m[0])), 0);
   r, np := refToken(pd.rdr);
-
   return int(np) + len(r), r;
 }
 
@@ -622,28 +539,14 @@ func (pd *PdfReaderT) Att(a string, src []byte) []byte {
 func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
   q, d := pd.Resolve(reference);
   dic := pd.Dic(d);
-  var t []byte;
-  q, t = Token(&pd.Bin, q);
+  pd.rdr.Seek(int64(q), 0);
+  t, _ := simpleToken(pd.rdr);
   if string(t) != "stream" {
     return nil, []byte{}
   }
-K:
-  for {
-    switch pd.Bin[q] {
-    case 9, 32:
-      q++
-    case 10:
-      q++;
-      break K;
-    case 13:
-      q++;
-      if pd.Bin[q] == 10 {
-        q++
-      }
-      break K;
-    }
-  }
-  return dic, pd.Bin[q : q+pd.Num(dic["/Length"])];
+  skipLE(pd.rdr);
+  q = int(fpos(pd.rdr));
+  return dic, pd.Bin[q : q+pd.Num(dic["/Length"])];  // FIXME
 }
 
 // pd.DecodedStream() returns decoded contents of a stream.
@@ -685,22 +588,23 @@ func Load(fn string) *PdfReaderT {
   r := new(PdfReaderT);
   r.File = fn;
   r.Bin = a;
-  if r.Startxref = xrefStart(a); r.Startxref == -1 {
+  r.rdr = NewSliceReader(r.Bin);
+  if r.Startxref = xrefStart(r.rdr); r.Startxref == -1 {
     return nil
   }
   if r.Xref = xrefRead(a, r.Startxref); r.Xref == nil {
     return nil
   }
-  p, s := Token(&a, xrefSkip(a, r.Startxref));
+  r.rdr.Seek(int64(xrefSkip(a, r.Startxref)), 0);
+  s, _ := simpleToken(r.rdr);
   if string(s) != "trailer" {
     return nil
   }
-  p, s = Token(&a, p);
+  s, _ = simpleToken(r.rdr);
   if r.Trailer = Dictionary(s); r.Trailer == nil {
     return nil
   }
   r.rcache = make(map[string][]byte);
   r.rncache = make(map[string]int);
-  r.rdr = NewSliceReader(r.Bin);
   return r;
 }

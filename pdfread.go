@@ -11,8 +11,10 @@ import (
 
 // limits
 
-const MAX_PDF_UPDATES = 1024
-const MAX_PDF_ARRAYSIZE = 1024
+const (
+  MAX_PDF_UPDATES   = 1024;
+  MAX_PDF_ARRAYSIZE = 1024;
+)
 
 // types
 
@@ -186,7 +188,7 @@ func refToken(f fancy.Reader) ([]byte, int64) {
     r, q := simpleToken(f);
     if string(r) == "R" {
       f.Seek(p, 0);
-      tok = f.Slice(int(1+q-p));
+      tok = f.Slice(int(1 + q - p));
     } else {
       f.Seek(p+int64(len(tok)), 0)
     }
@@ -468,7 +470,7 @@ func (pd *PdfReaderT) Attribute(a string, src []byte) []byte {
   return r;
 }
 
-// pd.Attribute() tries to get an attribute from a page reference.  The
+// pd.Att() tries to get an attribute from a page reference.  The
 // attribute will be resolved.
 func (pd *PdfReaderT) Att(a string, src []byte) []byte {
   return pd.Obj(pd.Attribute(a, src))

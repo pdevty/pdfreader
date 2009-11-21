@@ -60,11 +60,10 @@ func (sr *SecReaderT) access(pos int64) (sl []byte, p int) {
     sr.age[old] = 0, false;
   }
   sr.ticker++;
-  sr.cache[pos] = make([]byte, _SECTOR_SIZE);
-  sl = sr.cache[pos];
+  sl = make([]byte, min(sr.size-pos*_SECTOR_SIZE, _SECTOR_SIZE));
+  sr.f.ReadAt(sl, pos*_SECTOR_SIZE);
+  sr.cache[pos] = sl;
   sr.age[pos] = sr.ticker;
-  siz := min(sr.size-pos*_SECTOR_SIZE, _SECTOR_SIZE);
-  sr.f.ReadAt(sr.cache[pos][0:siz], pos*_SECTOR_SIZE);
   return;
 }
 

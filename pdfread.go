@@ -12,8 +12,6 @@ import (
 // limits
 
 const MAX_PDF_UPDATES = 1024
-const MAX_PDF_STRING = 1024
-const MAX_PDF_DICT = 1024 * 16
 const MAX_PDF_ARRAYSIZE = 1024
 
 // types
@@ -176,9 +174,9 @@ again:
       f.UnreadByte()
     }
   }
-  r := make([]byte, fpos(f)-p);
-  f.ReadAt(r, p);
-  return r, p;
+  n := int(fpos(f) - p);
+  f.Seek(p, 0);
+  return f.Slice(n), p;
 }
 
 func refToken(f fancy.Reader) ([]byte, int64) {
@@ -187,8 +185,8 @@ func refToken(f fancy.Reader) ([]byte, int64) {
     simpleToken(f);
     r, q := simpleToken(f);
     if string(r) == "R" {
-      tok = make([]byte, 1+q-p);
-      f.ReadAt(tok, p);
+      f.Seek(p, 0);
+      tok = f.Slice(int(1+q-p));
     } else {
       f.Seek(p+int64(len(tok)), 0)
     }
@@ -354,7 +352,9 @@ func (pd *PdfReaderT) object(o int) (int, []byte) {
 // pd.Resolve() resolves a reference in the PDF file. You'll probably need
 // this method for reading streams only.
 func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
-  if len(s) < 5 || s[len(s)-1] != 'R' { return -1, s }
+  if len(s) < 5 || s[len(s)-1] != 'R' {
+    return -1, s
+  }
   done := make(map[int]int);
   var resolve func(s []byte) (int, []byte);
   resolve = func(s []byte) (int, []byte) {
@@ -367,12 +367,12 @@ func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
       orig := s;
       o := num(s);
       if _, ok = done[o]; ok {
-        return -1, _Bytes;
+        return -1, _Bytes
       }
       done[o] = 1;
       n, s = pd.object(o);
       if s[0] >= '0' && s[0] <= '9' && s[len(s)-1] == 'R' {
-        n, s = resolve(s);
+        n, s = resolve(s)
       }
       pd.rcache[string(orig)] = s;
       pd.rncache[string(orig)] = n;
@@ -484,9 +484,7 @@ func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
     return nil, []byte{}
   }
   skipLE(pd.rdr);
-  data := make([]byte, pd.Num(dic["/Length"]));
-  pd.rdr.Read(data);
-  return dic, data;
+  return dic, pd.rdr.Slice(pd.Num(dic["/Length"]));
 }
 
 // pd.DecodedStream() returns decoded contents of a stream.

@@ -4,7 +4,6 @@ import (
   "io";
   "os";
   "regexp";
-  "strconv";
   "bytes";
   "compress/zlib";
   "fancy";
@@ -45,11 +44,16 @@ func min(a, b int) int {
   return b;
 }
 func end(a []byte, n int) int { return max(0, len(a)-n) }
-func num(n []byte) int {
-  if i, e := strconv.Atoi(string(n)); e == nil {
-    return i
+
+func num(n []byte) (r int) {
+  for i := 0; i < len(n); i++ {
+    if n[i] >= '0' && n[i] <= '9' {
+      r = r*10 + int(n[i]-'0')
+    } else {
+      break
+    }
   }
-  return 0;
+  return;
 }
 
 func skipLE(f fancy.Reader) {
@@ -313,13 +317,14 @@ func xrefRead(f fancy.Reader, p int) map[int]int {
       if string(m[0]) == "trailer" {
         break
       }
+      skipLE(f);
       o := num(m[0]);
-      for c := num(m[1]); c > 0; c-- {
-        m = tupel(f, 3);
-        if m[2][0] != 'n' {
+      dat := f.Slice(num(m[1]) * 20);
+      for i := 0; i < len(dat); i += 20 {
+        if dat[i+17] != 'n' {
           r[o] = 0, false
         } else {
-          r[o] = num(m[0])
+          r[o] = num(dat[i : i+10])
         }
         o++;
       }

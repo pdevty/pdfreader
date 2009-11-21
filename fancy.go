@@ -13,7 +13,6 @@ type Reader interface {
   ReadByte() (c byte, err os.Error);
   UnreadByte() os.Error;
   Size() int64;
-  Close();
 }
 
 // ------------------------------------------------------------------
@@ -39,7 +38,6 @@ func min(a, b int64) int64 {
 }
 
 func (sr *SecReaderT) access(pos int64) (sl []byte, p int) {
-
   p = int(pos % _SECTOR_SIZE);
   pos /= _SECTOR_SIZE;
   if s, ok := sr.cache[pos]; ok {
@@ -132,10 +130,10 @@ func (sr *SecReaderT) UnreadByte() os.Error {
 
 func (sr *SecReaderT) Size() int64 { return sr.size }
 
-func (sr *SecReaderT) Close() {}
-
 func (sr *SecReaderT) Slice(n int) []byte {
-  return []byte{} // FIXME
+  r := make([]byte, n);
+  sr.Read(r);
+  return r;
 }
 
 func SecReader(f io.ReaderAt, size int64) Reader {
@@ -203,10 +201,9 @@ func (sl *SliceReaderT) UnreadByte() os.Error {
   return nil;
 }
 
-func (sl *SliceReaderT) Close() {}
-
 func (sl *SliceReaderT) Slice(n int) []byte {
-  return []byte{} // FIXME
+  sl.pos += int64(n);
+  return sl.bin[sl.pos-int64(n) : sl.pos];
 }
 
 func SliceReader(bin []byte) Reader {

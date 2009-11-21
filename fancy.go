@@ -212,3 +212,24 @@ func SliceReader(bin []byte) Reader {
 }
 
 // ------------------------------------------------------------------
+
+func ReadAndClose(f io.ReadCloser, err os.Error) []byte {
+  if err != nil {
+    return []byte{}
+  }
+  r, _ := io.ReadAll(f);
+  f.Close();
+  return r;
+}
+
+func FileReader(fn string) Reader {
+  dir, err := os.Stat(fn);
+  if err != nil {
+    return nil
+  }
+  fil, err := os.Open(fn, os.O_RDONLY, -1);
+  if err != nil {
+    return nil
+  }
+  return SecReader(fil, int64(dir.Size));
+}

@@ -1,8 +1,6 @@
 package pdfread
 
 import (
-  "io";
-  "os";
   "regexp";
   "compress/zlib";
   "fancy";
@@ -497,9 +495,7 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (map[string][]byte, []byte
     for ff := range filter {
       switch string(filter[ff]) {
       case "/FlateDecode":
-        inf, _ := zlib.NewInflater(fancy.SliceReader(data));
-        data, _ = io.ReadAll(inf);
-        inf.Close();
+        data = fancy.ReadAndClose(zlib.NewInflater(fancy.SliceReader(data)))
       default:
         data = []byte{}
       }
@@ -521,10 +517,7 @@ func (pd *PdfReaderT) PageFonts(page []byte) map[string][]byte {
 func Load(fn string) *PdfReaderT {
   r := new(PdfReaderT);
   r.File = fn;
-  dir, _ := os.Stat(fn);
-  fil, _ := os.Open(fn, os.O_RDONLY, -1);
-  r.rdr = fancy.SecReader(fil, int64(dir.Size));
-
+  r.rdr = fancy.FileReader(fn);
   if r.Startxref = xrefStart(r.rdr); r.Startxref == -1 {
     return nil
   }

@@ -351,43 +351,35 @@ func (pd *PdfReaderT) object(o int) (int, []byte) {
   return int(np) + len(r), r;
 }
 
-var res = regexp.MustCompile("^"
-  "([0-9]+)"
-  "[\r\n\t ]+"
-  "[0-9]+"
-  "[\r\n\t ]+"
-  "R$")
-
 // pd.Resolve() resolves a reference in the PDF file. You'll probably need
 // this method for reading streams only.
 func (pd *PdfReaderT) Resolve(s []byte) (int, []byte) {
-  n := -1;
-  if len(s) >= 5 && s[len(s)-1] == 'R' {
-    z, ok := pd.rcache[string(s)];
-    if ok {
-      return pd.rncache[string(s)], z
-    }
-    done := make(map[int]int);
-    orig := s;
-  redo:
-    m := res.MatchSlices(s);
-    if m != nil {
-      n = num(m[1]);
-      if _, wrong := done[n]; wrong {
-        return -1, _Bytes
+  if len(s) < 5 || s[len(s)-1] != 'R' { return -1, s }
+  done := make(map[int]int);
+  var resolve func(s []byte) (int, []byte);
+  resolve = func(s []byte) (int, []byte) {
+    n := -1;
+    if len(s) >= 5 && s[0] >= '0' && s[0] <= '9' && s[len(s)-1] == 'R' {
+      z, ok := pd.rcache[string(s)];
+      if ok {
+        return pd.rncache[string(s)], z
       }
-      done[n] = 1;
-      n, s = pd.object(n);
-      if z, ok = pd.rcache[string(s)]; !ok {
-        goto redo
+      orig := s;
+      o := num(s);
+      if _, ok = done[o]; ok {
+        return -1, _Bytes;
       }
-      s = z;
-      n = pd.rncache[string(s)];
+      done[o] = 1;
+      n, s = pd.object(o);
+      if s[0] >= '0' && s[0] <= '9' && s[len(s)-1] == 'R' {
+        n, s = resolve(s);
+      }
+      pd.rcache[string(orig)] = s;
+      pd.rncache[string(orig)] = n;
     }
-    pd.rcache[string(orig)] = s;
-    pd.rncache[string(orig)] = n;
-  }
-  return n, s;
+    return n, s;
+  };
+  return resolve(s);
 }
 
 // pd.Obj() is the universal method to access contents of PDF objects or

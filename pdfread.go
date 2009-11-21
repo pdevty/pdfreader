@@ -4,7 +4,6 @@ import (
   "io";
   "os";
   "regexp";
-  "bytes";
   "compress/zlib";
   "fancy";
 )
@@ -498,7 +497,7 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (map[string][]byte, []byte
     for ff := range filter {
       switch string(filter[ff]) {
       case "/FlateDecode":
-        inf, _ := zlib.NewInflater(bytes.NewBuffer(data));
+        inf, _ := zlib.NewInflater(fancy.SliceReader(data));
         data, _ = io.ReadAll(inf);
         inf.Close();
       default:

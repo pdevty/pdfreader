@@ -26,7 +26,8 @@ type PdfReaderT struct {
   Trailer   map[string][]byte; // trailer dictionary of the file
   rcache    map[string][]byte; // resolver cache
   rncache   map[string]int;    // resolver cache (positions in file)
-  pages     [][]byte;          // pages cache
+  dicache   map[string]map[string][]byte;
+  pages     [][]byte; // pages cache
 }
 
 var _Bytes = []byte{}
@@ -404,7 +405,12 @@ func (pd *PdfReaderT) Num(reference []byte) int {
 
 // pd.Dic() queries dictionary data from a reference.
 func (pd *PdfReaderT) Dic(reference []byte) map[string][]byte {
-  return Dictionary(pd.Obj(reference))
+  d, ok := pd.dicache[string(reference)];
+  if !ok {
+    d = Dictionary(pd.Obj(reference));
+    pd.dicache[string(reference)] = d;
+  }
+  return d;
 }
 
 // pd.Arr() queries array data from a reference.
@@ -545,5 +551,6 @@ func Load(fn string) *PdfReaderT {
   }
   r.rcache = make(map[string][]byte);
   r.rncache = make(map[string]int);
+  r.dicache = make(map[string]map[string][]byte);
   return r;
 }

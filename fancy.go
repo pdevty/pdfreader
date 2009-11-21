@@ -19,8 +19,8 @@ type Reader interface {
 // ------------------------------------------------------------------
 
 const (
-  _SECTOR_SIZE  = 1024;
-  _SECTOR_COUNT = 10;
+  _SECTOR_SIZE  = 512;
+  _SECTOR_COUNT = 32;
 )
 
 type SecReaderT struct {
@@ -31,7 +31,15 @@ type SecReaderT struct {
   f         io.ReaderAt;
 }
 
+func min(a, b int64) int64 {
+  if a < b {
+    return a
+  }
+  return b;
+}
+
 func (sr *SecReaderT) access(pos int64) (sl []byte, p int) {
+
   p = int(pos % _SECTOR_SIZE);
   pos /= _SECTOR_SIZE;
   if s, ok := sr.cache[pos]; ok {
@@ -57,7 +65,8 @@ func (sr *SecReaderT) access(pos int64) (sl []byte, p int) {
   sr.cache[pos] = make([]byte, _SECTOR_SIZE);
   sl = sr.cache[pos];
   sr.age[pos] = sr.ticker;
-  sr.f.ReadAt(sr.cache[pos], pos*_SECTOR_SIZE);
+  siz := min(sr.size-pos*_SECTOR_SIZE, _SECTOR_SIZE);
+  sr.f.ReadAt(sr.cache[pos][0:siz], pos*_SECTOR_SIZE);
   return;
 }
 
@@ -133,6 +142,8 @@ func SecReader(f io.ReaderAt, size int64) Reader {
   sr := new(SecReaderT);
   sr.f = f;
   sr.size = size;
+  sr.cache = make(map[int64][]byte);
+  sr.age = make(map[int64]int);
   return sr;
 }
 

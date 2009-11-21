@@ -1,8 +1,8 @@
 package pdfread
 
 import (
-  //  "fmt";
   "io";
+  "os";
   "regexp";
   "strconv";
   "bytes";
@@ -21,7 +21,6 @@ const MAX_PDF_ARRAYSIZE = 1024
 
 type PdfReaderT struct {
   File      string;            // name of the file
-  Bin       []byte;            // contents of the file
   rdr       fancy.Reader;      // reader for the contents
   Startxref int;               // starting of xref table
   Xref      map[int]int;       // "pointers" of the xref table
@@ -218,8 +217,7 @@ func xrefStart(f fancy.Reader) int {
 }
 
 // xrefSkip() queries the start of the trailer for a (partial) xref-table.
-func xrefSkip(pdf []byte, xref int) int {
-  f := fancy.SliceReader(pdf);
+func xrefSkip(f fancy.Reader, xref int) int {
   f.Seek(int64(xref), 0);
   t, p := simpleToken(f);
   if string(t) != "xref" {
@@ -288,15 +286,14 @@ func Array(s []byte) [][]byte {
 // xrefRead() reads the xref table(s) of a PDF file. This is not recursive
 // in favour of not to have to keep track of already used starting points
 // for xrefs.
-func xrefRead(pdf []byte, p int) map[int]int {
-  f := fancy.SliceReader(pdf);
+func xrefRead(f fancy.Reader, p int) map[int]int {
   var back [MAX_PDF_UPDATES]int;
   b := 0;
   s := _Bytes;
   for ok := true; ok; {
     back[b] = p;
     b++;
-    p = xrefSkip(pdf, p);
+    p = xrefSkip(f, p);
     f.Seek(int64(p), 0);
     s, _ = simpleToken(f);
     if string(s) != "trailer" {
@@ -484,8 +481,9 @@ func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
     return nil, []byte{}
   }
   skipLE(pd.rdr);
-  q = int(fpos(pd.rdr));
-  return dic, pd.Bin[q : q+pd.Num(dic["/Length"])]; // FIXME
+  data := make([]byte, pd.Num(dic["/Length"]));
+  pd.rdr.Read(data);
+  return dic, data;
 }
 
 // pd.DecodedStream() returns decoded contents of a stream.
@@ -517,26 +515,21 @@ func (pd *PdfReaderT) PageFonts(page []byte) map[string][]byte {
   return pd.Dic(fonts);
 }
 
-
 // Load() loads a PDF file of a given name.
 func Load(fn string) *PdfReaderT {
-  a, e := io.ReadFile(fn);
-  //  fmt.Printf("Here it is!\n");
-  if e != nil {
-    return nil
-  }
   r := new(PdfReaderT);
   r.File = fn;
-  r.Bin = a;
-  r.rdr = fancy.SliceReader(r.Bin);
+  dir, _ := os.Stat(fn);
+  fil, _ := os.Open(fn, os.O_RDONLY, -1);
+  r.rdr = fancy.SecReader(fil, int64(dir.Size));
+
   if r.Startxref = xrefStart(r.rdr); r.Startxref == -1 {
     return nil
   }
-  if r.Xref = xrefRead(a, r.Startxref); r.Xref == nil {
+  if r.Xref = xrefRead(r.rdr, r.Startxref); r.Xref == nil {
     return nil
   }
-  //  fmt.Printf("Here is the xref!\n");
-  r.rdr.Seek(int64(xrefSkip(a, r.Startxref)), 0);
+  r.rdr.Seek(int64(xrefSkip(r.rdr, r.Startxref)), 0);
   s, _ := simpleToken(r.rdr);
   if string(s) != "trailer" {
     return nil

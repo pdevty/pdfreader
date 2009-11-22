@@ -501,7 +501,7 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
         data = fancy.ReadAndClose(zlib.NewInflater(fancy.SliceReader(data)))
       case "/ASCII85Decode":
         ds := data;
-        if ds[len(ds)-1] == '>' && ds[len(ds)-2] == '~' {
+        if len(ds) >= 2 && ds[len(ds)-1] == '>' && ds[len(ds)-2] == '~' {
           ds = ds[0:len(ds)-2];
         }
         data = fancy.ReadAll(ascii85.NewDecoder(fancy.SliceReader(ds)));

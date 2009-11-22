@@ -535,7 +535,7 @@ func Load(fn string) *PdfReaderT {
   if r.Trailer = Dictionary(s); r.Trailer == nil {
     return nil
   }
-  r.rcache = make(DictionaryT);
+  r.rcache = make(map[string][]byte);
   r.rncache = make(map[string]int);
   r.dicache = make(map[string]DictionaryT);
   return r;

@@ -3,6 +3,7 @@ package pdfread
 import (
   "regexp";
   "compress/zlib";
+  "encoding/ascii85";
   "fancy";
 )
 
@@ -498,6 +499,12 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
       switch string(filter[ff]) {
       case "/FlateDecode":
         data = fancy.ReadAndClose(zlib.NewInflater(fancy.SliceReader(data)))
+      case "/ASCII85Decode":
+        ds := data;
+        if ds[len(ds)-1] == '>' && ds[len(ds)-2] == '~' {
+          ds = ds[0:len(ds)-2];
+        }
+        data = fancy.ReadAll(ascii85.NewDecoder(fancy.SliceReader(ds)));
       default:
         data = []byte{}
       }

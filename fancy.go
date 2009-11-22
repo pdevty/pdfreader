@@ -233,3 +233,8 @@ func FileReader(fn string) Reader {
   }
   return SecReader(fil, int64(dir.Size));
 }
+
+func ReadAll(f io.Reader) []byte {
+  r, _ := io.ReadAll(f);
+  return r;
+}

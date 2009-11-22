@@ -15,15 +15,17 @@ const (
 
 // types
 
+type DictionaryT map[string][]byte
+
 type PdfReaderT struct {
   File      string;            // name of the file
   rdr       fancy.Reader;      // reader for the contents
   Startxref int;               // starting of xref table
   Xref      map[int]int;       // "pointers" of the xref table
-  Trailer   map[string][]byte; // trailer dictionary of the file
+  Trailer   DictionaryT; // trailer dictionary of the file
   rcache    map[string][]byte; // resolver cache
   rncache   map[string]int;    // resolver cache (positions in file)
-  dicache   map[string]map[string][]byte;
+  dicache   map[string]DictionaryT;
   pages     [][]byte; // pages cache
 }
 
@@ -239,7 +241,7 @@ func xrefSkip(f fancy.Reader, xref int) int {
 }
 
 // Dictionary() makes a map/hash from PDF dictionary data.
-func Dictionary(s []byte) map[string][]byte {
+func Dictionary(s []byte) DictionaryT {
   if len(s) < 4 {
     return nil
   }
@@ -247,7 +249,7 @@ func Dictionary(s []byte) map[string][]byte {
   if s[0] != s[1] || s[0] != '<' || s[e] != s[e-1] || s[e] != '>' {
     return nil
   }
-  r := make(map[string][]byte);
+  r := make(DictionaryT);
   rdr := fancy.SliceReader(s[2 : e-1]);
   for {
     t, _ := simpleToken(rdr);
@@ -395,7 +397,7 @@ func (pd *PdfReaderT) Num(reference []byte) int {
 }
 
 // pd.Dic() queries dictionary data from a reference.
-func (pd *PdfReaderT) Dic(reference []byte) map[string][]byte {
+func (pd *PdfReaderT) Dic(reference []byte) DictionaryT {
   d, ok := pd.dicache[string(reference)];
   if !ok {
     d = Dictionary(pd.Obj(reference));
@@ -474,7 +476,7 @@ func (pd *PdfReaderT) Att(a string, src []byte) []byte {
 }
 
 // pd.Stream() returns contents of a stream.
-func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
+func (pd *PdfReaderT) Stream(reference []byte) (DictionaryT, []byte) {
   q, d := pd.Resolve(reference);
   dic := pd.Dic(d);
   pd.rdr.Seek(int64(q), 0);
@@ -487,7 +489,7 @@ func (pd *PdfReaderT) Stream(reference []byte) (map[string][]byte, []byte) {
 }
 
 // pd.DecodedStream() returns decoded contents of a stream.
-func (pd *PdfReaderT) DecodedStream(reference []byte) (map[string][]byte, []byte) {
+func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
   dic, data := pd.Stream(reference);
   f, ok := dic["/Filter"];
   if ok {
@@ -505,7 +507,7 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (map[string][]byte, []byte
 }
 
 // pd.PageFonts() returns references to the fonts defined for a page.
-func (pd *PdfReaderT) PageFonts(page []byte) map[string][]byte {
+func (pd *PdfReaderT) PageFonts(page []byte) DictionaryT {
   fonts, _ := pd.Dic(pd.Attribute("/Resources", page))["/Font"];
   if fonts == nil {
     return nil
@@ -533,8 +535,8 @@ func Load(fn string) *PdfReaderT {
   if r.Trailer = Dictionary(s); r.Trailer == nil {
     return nil
   }
-  r.rcache = make(map[string][]byte);
+  r.rcache = make(DictionaryT);
   r.rncache = make(map[string]int);
-  r.dicache = make(map[string]map[string][]byte);
+  r.dicache = make(map[string]DictionaryT);
   return r;
 }

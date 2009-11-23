@@ -22,5 +22,5 @@ clean:
 distclean: clean
 	-rm $(ALL) *.$O DEADJOE
 
-pdfread.$O: fancy.$O
+pdfread.$O: fancy.$O hex.$O
 pdtest: pdfread.$O

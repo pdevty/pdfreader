@@ -5,6 +5,7 @@ import (
   "compress/zlib";
   "encoding/ascii85";
   "fancy";
+  "hex";
 )
 
 // limits
@@ -23,7 +24,7 @@ type PdfReaderT struct {
   rdr       fancy.Reader;      // reader for the contents
   Startxref int;               // starting of xref table
   Xref      map[int]int;       // "pointers" of the xref table
-  Trailer   DictionaryT; // trailer dictionary of the file
+  Trailer   DictionaryT;       // trailer dictionary of the file
   rcache    map[string][]byte; // resolver cache
   rncache   map[string]int;    // resolver cache (positions in file)
   dicache   map[string]DictionaryT;
@@ -502,12 +503,14 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
       case "/ASCII85Decode":
         ds := data;
         for len(ds) > 1 && ds[len(ds)-1] < 33 {
-          ds = ds[0:len(ds)-1];
+          ds = ds[0 : len(ds)-1]
         }
         if len(ds) >= 2 && ds[len(ds)-1] == '>' && ds[len(ds)-2] == '~' {
-          ds = ds[0:len(ds)-2];
+          ds = ds[0 : len(ds)-2]
         }
         data = fancy.ReadAll(ascii85.NewDecoder(fancy.SliceReader(ds)));
+      case "/ASCIIHexDecode":
+        data = hex.Decode(string(data))
       default:
         data = []byte{}
       }

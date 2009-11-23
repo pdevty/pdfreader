@@ -1,5 +1,7 @@
 package lzw
 
+// LZW reader for PDF.
+
 import "crush"
 
 const (
@@ -58,7 +60,7 @@ func (lzw *lzwDecoder) token() (r int) {
     }
     lzw.reset();
   }
-  return r;
+  return;
 }
 
 func DecodeToSlice(s []byte, out []byte, early bool) (r int) {

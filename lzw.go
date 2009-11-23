@@ -1,5 +1,7 @@
 package lzw
 
+import "crush"
+
 const (
   _LZW_EOD       = 257;
   _LZW_RESET     = 256;
@@ -8,40 +10,10 @@ const (
   _LZW_STARTUTOK = 258;
 )
 
-type BitT struct {
-  s    []byte;
-  p, b int;
-}
-
 type lzwDecoder struct {
-  bits   *BitT;
+  bits   *crush.BitT;
   bc, cp int;
   early  bool;
-}
-
-var mask = [9]int{0, 1, 3, 7, 15, 31, 63, 127, 255}
-
-func (x *BitT) get(n int) (r int) {
-  if x.b == 0 {
-    x.b = 8;
-    x.p++;
-  }
-  if x.b >= n {
-    x.b -= n;
-    r = int(x.s[x.p]>>uint8(x.b)) & mask[n];
-  } else {
-    n -= x.b;
-    r = x.get(x.b) << uint8(n);
-    r += x.get(n);
-  }
-  return;
-}
-
-func NewBits(s []byte) *BitT {
-  r := new(BitT);
-  r.s = s;
-  r.b = 8;
-  return r;
 }
 
 func (lzw *lzwDecoder) reset() {
@@ -51,7 +23,7 @@ func (lzw *lzwDecoder) reset() {
 
 func newLzwDecoder(s []byte, early bool) (lzw *lzwDecoder) {
   lzw = new(lzwDecoder);
-  lzw.bits = NewBits(s);
+  lzw.bits = crush.NewBits(s);
   lzw.early = early;
   lzw.reset();
   return;
@@ -80,7 +52,7 @@ func (lzw *lzwDecoder) update() bool {
 
 func (lzw *lzwDecoder) token() (r int) {
   for {
-    r = lzw.bits.get(lzw.bc);
+    r = lzw.bits.Get(lzw.bc);
     if r != _LZW_RESET {
       break
     }

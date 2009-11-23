@@ -1,6 +1,6 @@
 package lzw
 
-// LZW reader for PDF.
+// LZW decoder for PDF.
 
 import "crush"
 

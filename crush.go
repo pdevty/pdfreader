@@ -1,5 +1,7 @@
 package crush
 
+// "crush" bytes into bits - variable length.
+
 type BitT struct {
   s    []byte;
   p, b int;

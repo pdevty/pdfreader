@@ -6,6 +6,7 @@ import (
   "encoding/ascii85";
   "fancy";
   "hex";
+  "lzw";
 )
 
 // limits
@@ -500,6 +501,8 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
       switch string(filter[ff]) {
       case "/FlateDecode":
         data = fancy.ReadAndClose(zlib.NewInflater(fancy.SliceReader(data)))
+      case "/LZWDecode":
+        data = lzw.Decode(data, true);
       case "/ASCII85Decode":
         ds := data;
         for len(ds) > 1 && ds[len(ds)-1] < 33 {

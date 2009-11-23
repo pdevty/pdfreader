@@ -6,9 +6,11 @@ package main
 // defined fonts of the pages.
 
 import (
+  "lzw";
   "os";
   "fmt";
   "pdfread";
+  "hex";
 )
 
 func main() {
@@ -34,4 +36,6 @@ func main() {
          string(ps));
     */
   }
+
+  fmt.Printf("%v\n", lzw.Decode(hex.Decode("80 0B 60 50 22 0C 0C 85 01"), true));
 }

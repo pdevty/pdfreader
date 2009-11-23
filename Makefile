@@ -24,3 +24,4 @@ distclean: clean
 
 pdfread.$O: fancy.$O hex.$O
 pdtest: pdfread.$O lzw.$O
+lzw.$O: crush.$O

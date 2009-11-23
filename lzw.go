@@ -63,11 +63,11 @@ func (lzw *lzwDecoder) update() bool {
       lzw.cp++
     }
     switch lzw.cp {
-    case 511:
+    case 512:
       lzw.bc = 10
-    case 1023:
+    case 1024:
       lzw.bc = 11
-    case 2047:
+    case 2048:
       lzw.bc = 12
     }
     if !lzw.early {

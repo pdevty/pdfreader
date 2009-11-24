@@ -515,13 +515,16 @@ func (pd *PdfReaderT) Stream(reference []byte) (DictionaryT, []byte) {
 // pd.DecodedStream() returns decoded contents of a stream.
 func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
   dic, data := pd.Stream(reference);
-  deco := DictionaryT{};
-  if d, ok := dic["/DecodeParams"]; ok {
-    deco = pd.Dic(d)
-  }
   if f, ok := dic["/Filter"]; ok {
     filter := pd.ForcedArray(f);
+    var decos [][]byte;
+    if d, ok := dic["/DecodeParams"]; ok {
+      decos = pd.ForcedArray(d);
+    } else {
+      decos = make([][]byte, len(filter));
+    }
     for ff := range filter {
+      deco := pd.Dic(decos[ff]);
       switch string(filter[ff]) {
       case "/FlateDecode":
         data = fancy.ReadAndClose(zlib.NewInflater(fancy.SliceReader(data)))

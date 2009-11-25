@@ -10,6 +10,7 @@ type SvgT struct {
   firstPoint   [][]byte;
   path         []string;
   p            int;
+  groups   int;
 }
 
 func (s *SvgT) append(p string) {
@@ -64,12 +65,12 @@ func (s *SvgT) Rectangle(coords [][]byte) {}
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<path d=\"%s\" />\n\n", s.SvgPath());
+  fmt.Printf("<path d=\"%s\" stroke=\"#000000\" />\n\n", s.SvgPath());
   s.path = nil;
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<path d=\"%s\" />\n\n", s.SvgPath());
+  fmt.Printf("<path d=\"%s\" fill=\"#000000\" />\n\n", s.SvgPath());
   s.path = nil;
 }
 
@@ -92,6 +93,17 @@ func (s *SvgT) Clip() {}
 
 func (s *SvgT) EOClip() {}
 
-func (s *SvgT) Concat(matrix [][]byte) {}
+func (s *SvgT) Concat(m [][]byte) {
+  fmt.Printf("<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n\n",
+    m[0], m[1], m[2], m[3], m[4], m[5]);
+  s.groups++;
+}
+
+func (s *SvgT) CloseDrawing() {
+  for s.groups > 0 {
+    fmt.Printf("</g>\n");
+    s.groups--;
+  }
+}
 
 func NewDrawer() *SvgT { return new(SvgT) }

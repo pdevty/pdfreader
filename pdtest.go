@@ -41,5 +41,6 @@ func main() {
     //    */
     test := graf.NewTestSvg();
     test.Interpret(fancy.SliceReader(ps));
+    test.Draw.CloseDrawing();
   }
 }

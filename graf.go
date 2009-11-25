@@ -58,6 +58,7 @@ type Drawer interface {
   Clip();
   EOClip();
   Concat(matrix [][]byte);
+  CloseDrawing();
 }
 
 type DrawerState interface {
@@ -92,6 +93,8 @@ type PdfDrawerT struct {
 }
 
 var PdfOps = map[string]func(pd *PdfDrawerT){
+  "cm": func(pd *PdfDrawerT) { pd.Draw.Concat(pd.Stack.Drop(6)) },
+
   "m": func(pd *PdfDrawerT) { pd.Draw.MoveTo(pd.Stack.Drop(2)) },
   "l": func(pd *PdfDrawerT) { pd.Draw.LineTo(pd.Stack.Drop(2)) },
   "c": func(pd *PdfDrawerT) { pd.Draw.CurveTo(pd.Stack.Drop(6)) },

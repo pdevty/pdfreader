@@ -3,6 +3,7 @@ package svg
 import (
   "fmt";
   "util";
+  "strconv";
 )
 
 type SvgT struct {
@@ -62,7 +63,18 @@ func (s *SvgT) CurveTo(coords [][]byte) {
     coords[4], coords[5]));
 }
 
-func (s *SvgT) Rectangle(coords [][]byte) {}
+func (s *SvgT) Rectangle(coords [][]byte) {
+  x, _ := strconv.Atof(string(coords[0]));
+  y, _ := strconv.Atof(string(coords[1]));
+  w, _ := strconv.Atof(string(coords[2]));
+  h, _ := strconv.Atof(string(coords[3]));
+
+  s.currentPoint = coords[0:1];
+  s.append(fmt.Sprintf("M%s %s V%f H%f V%s H%s Z",
+    coords[0], coords[1],
+    y+h, x+w,
+    coords[1], coords[0]));
+}
 
 func (s *SvgT) ClosePath() { s.append("Z") }
 

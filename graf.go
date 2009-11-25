@@ -131,12 +131,40 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
   },
   "n": func(pd *PdfDrawerT) { pd.Draw.DropPath() },
 
-  "rg": func(pd *PdfDrawerT) { pd.Color.SetRGBFill(pd.Stack.Drop(3)) },
-  "RG": func(pd *PdfDrawerT) { pd.Color.SetRGBStroke(pd.Stack.Drop(3)) },
-  "g": func(pd *PdfDrawerT) { pd.Color.SetGrayFill(pd.Stack.Pop()) },
-  "G": func(pd *PdfDrawerT) { pd.Color.SetGrayStroke(pd.Stack.Pop()) },
-  "k": func(pd *PdfDrawerT) { pd.Color.SetCMYKFill(pd.Stack.Drop(4)) },
-  "K": func(pd *PdfDrawerT) { pd.Color.SetCMYKStroke(pd.Stack.Drop(4)) },
+  "rg": func(pd *PdfDrawerT) {
+    pd.Color.SetRGBFill(pd.Stack.Drop(3));
+    pd.Ops["sc"] = pd.Ops["rg"];
+  },
+  "RG": func(pd *PdfDrawerT) {
+    pd.Color.SetRGBStroke(pd.Stack.Drop(3));
+    pd.Ops["SC"] = pd.Ops["RG"];
+
+  },
+  "g": func(pd *PdfDrawerT) {
+    pd.Color.SetGrayFill(pd.Stack.Pop());
+    pd.Ops["sc"] = pd.Ops["g"];
+
+  },
+  "G": func(pd *PdfDrawerT) {
+    pd.Color.SetGrayStroke(pd.Stack.Pop());
+    pd.Ops["SC"] = pd.Ops["G"];
+
+  },
+  "k": func(pd *PdfDrawerT) {
+    pd.Color.SetCMYKFill(pd.Stack.Drop(4));
+    pd.Ops["sc"] = pd.Ops["k"];
+
+  },
+  "K": func(pd *PdfDrawerT) {
+    pd.Color.SetCMYKStroke(pd.Stack.Drop(4));
+    pd.Ops["SC"] = pd.Ops["K"];
+
+  },
+
+
+  // FIXME: SC and sc ...
+
+
 
   "gs": func(pd *PdfDrawerT) {
     pd.Stack.Pop();
@@ -160,7 +188,7 @@ func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
 
 func NewTestSvg() *PdfDrawerT {
   r := new(PdfDrawerT);
-  r.Stack = NewStack(1024);
+  r.Stack = NewStack(10240);
   t := svg.NewDrawer();
   r.Draw = t;
   r.Color = t;

@@ -108,6 +108,10 @@ func (s *SvgT) CloseDrawing() {
   }
 }
 
+func (s *SvgT) SetIdentity() {
+  s.CloseDrawing();
+}
+
 func NewDrawer() *SvgT { return new(SvgT) }
 
 

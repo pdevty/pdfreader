@@ -59,6 +59,7 @@ type Drawer interface {
   EOClip();
   Concat(matrix [][]byte);
   CloseDrawing();
+  SetIdentity();
 }
 
 type DrawerState interface {
@@ -132,6 +133,13 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
 
   "rg": func(pd *PdfDrawerT) { pd.Color.SetRGBFill(pd.Stack.Drop(3)) },
   "RG": func(pd *PdfDrawerT) { pd.Color.SetRGBStroke(pd.Stack.Drop(3)) },
+
+
+  "gs": func(pd *PdfDrawerT) {
+   pd.Stack.Pop();
+   pd.Draw.SetIdentity(); // FIXME ;)
+ },
+
 }
 
 func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {

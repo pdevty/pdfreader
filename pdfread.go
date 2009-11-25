@@ -179,7 +179,7 @@ func fpos(f fancy.Reader) int64 {
   return r;
 }
 
-func simpleToken(f fancy.Reader) ([]byte, int64) {
+func SimpleToken(f fancy.Reader) ([]byte, int64) {
 again:
   c := skipSpaces(f);
   if c == 0 {
@@ -205,10 +205,10 @@ again:
 }
 
 func refToken(f fancy.Reader) ([]byte, int64) {
-  tok, p := simpleToken(f);
+  tok, p := SimpleToken(f);
   if len(tok) > 0 && tok[0] >= '0' && tok[0] <= '9' {
-    simpleToken(f);
-    r, q := simpleToken(f);
+    SimpleToken(f);
+    r, q := SimpleToken(f);
     if string(r) == "R" {
       f.Seek(p, 0);
       tok = f.Slice(int(1 + q - p));
@@ -222,7 +222,7 @@ func refToken(f fancy.Reader) ([]byte, int64) {
 func tupel(f fancy.Reader, count int) [][]byte {
   r := make([][]byte, count);
   for i := 0; i < count; i++ {
-    r[i], _ = simpleToken(f)
+    r[i], _ = SimpleToken(f)
   }
   return r;
 }
@@ -247,17 +247,17 @@ func xrefStart(f fancy.Reader) int {
 // xrefSkip() queries the start of the trailer for a (partial) xref-table.
 func xrefSkip(f fancy.Reader, xref int) int {
   f.Seek(int64(xref), 0);
-  t, p := simpleToken(f);
+  t, p := SimpleToken(f);
   if string(t) != "xref" {
     return -1
   }
   for {
-    t, p = simpleToken(f);
+    t, p = SimpleToken(f);
     if t[0] < '0' || t[0] > '9' {
       f.Seek(p, 0);
       break;
     }
-    t, _ = simpleToken(f);
+    t, _ = SimpleToken(f);
     skipLE(f);
     f.Seek(int64(num(t)*20), 1);
   }
@@ -276,7 +276,7 @@ func Dictionary(s []byte) DictionaryT {
   r := make(DictionaryT);
   rdr := fancy.SliceReader(s[2 : e-1]);
   for {
-    t, _ := simpleToken(rdr);
+    t, _ := SimpleToken(rdr);
     if len(t) == 0 {
       break
     }
@@ -323,11 +323,11 @@ func xrefRead(f fancy.Reader, p int) map[int]int {
     b++;
     p = xrefSkip(f, p);
     f.Seek(int64(p), 0);
-    s, _ = simpleToken(f);
+    s, _ = SimpleToken(f);
     if string(s) != "trailer" {
       return nil
     }
-    s, _ = simpleToken(f);
+    s, _ = SimpleToken(f);
     s, ok = Dictionary(s)["/Prev"];
     p = num(s);
   }
@@ -335,7 +335,7 @@ func xrefRead(f fancy.Reader, p int) map[int]int {
   for b != 0 {
     b--;
     f.Seek(int64(back[b]), 0);
-    simpleToken(f); // skip "xref"
+    SimpleToken(f); // skip "xref"
     for {
       m := tupel(f, 2);
       if string(m[0]) == "trailer" {
@@ -503,13 +503,14 @@ func (pd *PdfReaderT) Att(a string, src []byte) []byte {
 func (pd *PdfReaderT) Stream(reference []byte) (DictionaryT, []byte) {
   q, d := pd.Resolve(reference);
   dic := pd.Dic(d);
+  l := pd.Num(dic["/Length"]);
   pd.rdr.Seek(int64(q), 0);
-  t, _ := simpleToken(pd.rdr);
+  t, _ := SimpleToken(pd.rdr);
   if string(t) != "stream" {
     return nil, []byte{}
   }
   skipLE(pd.rdr);
-  return dic, pd.rdr.Slice(pd.Num(dic["/Length"]));
+  return dic, pd.rdr.Slice(l);
 }
 
 // pd.DecodedStream() returns decoded contents of a stream.
@@ -519,9 +520,9 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
     filter := pd.ForcedArray(f);
     var decos [][]byte;
     if d, ok := dic["/DecodeParams"]; ok {
-      decos = pd.ForcedArray(d);
+      decos = pd.ForcedArray(d)
     } else {
-      decos = make([][]byte, len(filter));
+      decos = make([][]byte, len(filter))
     }
     for ff := range filter {
       deco := pd.Dic(decos[ff]);
@@ -574,11 +575,11 @@ func Load(fn string) *PdfReaderT {
     return nil
   }
   r.rdr.Seek(int64(xrefSkip(r.rdr, r.Startxref)), 0);
-  s, _ := simpleToken(r.rdr);
+  s, _ := SimpleToken(r.rdr);
   if string(s) != "trailer" {
     return nil
   }
-  s, _ = simpleToken(r.rdr);
+  s, _ = SimpleToken(r.rdr);
   if r.Trailer = Dictionary(s); r.Trailer == nil {
     return nil
   }

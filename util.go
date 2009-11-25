@@ -1,7 +1,9 @@
 package util
 
 func JoinStrings(a []string, c byte) []byte {
-  if a == nil { return []byte{} }
+  if a == nil {
+    return []byte{}
+  }
   l := 0;
   for k := range a {
     l += len(a[k]) + 1

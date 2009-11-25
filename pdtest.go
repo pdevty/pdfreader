@@ -6,11 +6,14 @@ package main
 // defined fonts of the pages.
 
 import (
-  "lzw";
+  //  "lzw";
   "os";
+  //  "io";
   "fmt";
   "pdfread";
-  "hex";
+  //  "hex";
+  "fancy";
+  "graf";
 )
 
 func main() {
@@ -28,14 +31,15 @@ func main() {
       }
     }
 
-    /* To test PDF streams:
-
-       cont := pd.ForcedArray(pd.Dic(pg[0])["/Contents"]);
-       _, ps := pd.DecodedStream(cont[0]);
+    //    /* To test PDF streams:
+    cont := pd.ForcedArray(pd.Dic(pg[0])["/Contents"]);
+    _, ps := pd.DecodedStream(cont[0]);
+    /*
        fmt.Printf("Length of stream: %d\n%v", len(ps),
          string(ps));
     */
+    //    */
+    test := graf.NewTestSvg();
+    test.Interpret(fancy.SliceReader(ps));
   }
-
-  fmt.Printf("%v\n", lzw.Decode(hex.Decode("80 0B 60 50 22 0C 0C 85 01"), true));
 }

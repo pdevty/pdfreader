@@ -1,5 +1,11 @@
 package graf
 
+import (
+  "fancy";
+  "pdfread";
+  "svg";
+)
+
 // Every args are in bytes here to allow lossless formate transformation.
 // Using floating point args would cause trouble with rounding - and: []byte
 // is not complicated to understand ;)
@@ -22,6 +28,12 @@ func (st *StackT) Drop(n int) [][]byte {
 func (st *StackT) Pop() []byte {
   st.sp--;
   return st.st[st.sp];
+}
+
+func NewStack(n int) *StackT {
+  r := new(StackT);
+  r.st = make([][]byte, n);
+  return r;
 }
 
 type Stack interface {
@@ -76,6 +88,7 @@ type PdfDrawerT struct {
   Config DrawerConfig;
   Color  DrawerColor;
   Stack  Stack;
+  Ops    map[string]func(pd *PdfDrawerT);
 }
 
 var PdfOps = map[string]func(pd *PdfDrawerT){
@@ -113,4 +126,26 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
     pd.Draw.EOFillAndStroke();
   },
   "n": func(pd *PdfDrawerT) { pd.Draw.DropPath() },
+}
+
+func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
+  for {
+    t, _ := pdfread.SimpleToken(rdr);
+    if len(t) == 0 {
+      break
+    }
+    if f, ok := pd.Ops[string(t)]; ok {
+      f(pd)
+    } else {
+      pd.Stack.Push(t)
+    }
+  }
+}
+
+func NewTestSvg() *PdfDrawerT {
+  r := new(PdfDrawerT);
+  r.Stack = NewStack(1024);
+  r.Draw = svg.NewDrawer();
+  r.Ops = PdfOps;
+  return r;
 }

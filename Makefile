@@ -23,5 +23,7 @@ distclean: clean
 	-rm $(ALL) *.$O DEADJOE
 
 pdfread.$O: fancy.$O hex.$O lzw.$O
-pdtest: pdfread.$O
+pdtest: pdfread.$O graf.$O fancy.$O
 lzw.$O: crush.$O
+graf.$O: svg.$O fancy.$O pdfread.$O
+svg.$O: util.$O

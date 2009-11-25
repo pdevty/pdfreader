@@ -108,9 +108,7 @@ func (s *SvgT) CloseDrawing() {
   }
 }
 
-func (s *SvgT) SetIdentity() {
-  s.CloseDrawing();
-}
+func (s *SvgT) SetIdentity() { s.CloseDrawing() }
 
 func NewDrawer() *SvgT { return new(SvgT) }
 
@@ -148,10 +146,28 @@ func percent(c []byte) []byte { // convert 0..1 color lossless to percent
   return r[p:q];
 }
 
-func (s *SvgT) SetGrayStroke(a []byte)      {}
-func (s *SvgT) SetGrayFill(a []byte)        {}
-func (s *SvgT) SetCMYKStroke(cmyk [][]byte) {}
-func (s *SvgT) SetCMYKFill(cmyk [][]byte)   {}
+func (s *SvgT) SetGrayStroke(a []byte) {
+  c := percent(a);
+  s.strokeColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)", c, c, c);
+}
+func (s *SvgT) SetGrayFill(a []byte) {
+  c := percent(a);
+  s.fillColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)", c, c, c);
+}
+func (s *SvgT) SetCMYKStroke(cmyk [][]byte) {
+  s.strokeColor = fmt.Sprintf("cmyk(%s%%,%s%%,%s%%,%s%%)",
+    percent(cmyk[0]),
+    percent(cmyk[1]),
+    percent(cmyk[2]),
+    percent(cmyk[3]))
+}
+func (s *SvgT) SetCMYKFill(cmyk [][]byte) {
+  s.fillColor = fmt.Sprintf("cmyk(%s%%,%s%%,%s%%,%s%%)",
+    percent(cmyk[0]),
+    percent(cmyk[1]),
+    percent(cmyk[2]),
+    percent(cmyk[3]))
+}
 func (s *SvgT) SetRGBStroke(rgb [][]byte) {
   s.strokeColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
     percent(rgb[0]),

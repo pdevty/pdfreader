@@ -133,13 +133,15 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
 
   "rg": func(pd *PdfDrawerT) { pd.Color.SetRGBFill(pd.Stack.Drop(3)) },
   "RG": func(pd *PdfDrawerT) { pd.Color.SetRGBStroke(pd.Stack.Drop(3)) },
-
+  "g": func(pd *PdfDrawerT) { pd.Color.SetGrayFill(pd.Stack.Pop()) },
+  "G": func(pd *PdfDrawerT) { pd.Color.SetGrayStroke(pd.Stack.Pop()) },
+  "k": func(pd *PdfDrawerT) { pd.Color.SetCMYKFill(pd.Stack.Drop(4)) },
+  "K": func(pd *PdfDrawerT) { pd.Color.SetCMYKStroke(pd.Stack.Drop(4)) },
 
   "gs": func(pd *PdfDrawerT) {
-   pd.Stack.Pop();
-   pd.Draw.SetIdentity(); // FIXME ;)
- },
-
+    pd.Stack.Pop();
+    pd.Draw.SetIdentity(); // FIXME ;)
+  },
 }
 
 func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {

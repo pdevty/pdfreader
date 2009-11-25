@@ -10,7 +10,9 @@ type SvgT struct {
   firstPoint   [][]byte;
   path         []string;
   p            int;
-  groups   int;
+  groups       int;
+  strokeColor  string;
+  fillColor    string;
 }
 
 func (s *SvgT) append(p string) {
@@ -65,12 +67,12 @@ func (s *SvgT) Rectangle(coords [][]byte) {}
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<path d=\"%s\" stroke=\"#000000\" />\n\n", s.SvgPath());
+  fmt.Printf("<path d=\"%s\" fill=\"none\" stroke-width=\"1\" stroke=\"%s\" />\n\n", s.SvgPath(), s.strokeColor);
   s.path = nil;
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<path d=\"%s\" fill=\"#000000\" />\n\n", s.SvgPath());
+  fmt.Printf("<path d=\"%s\" fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.fillColor);
   s.path = nil;
 }
 
@@ -107,3 +109,54 @@ func (s *SvgT) CloseDrawing() {
 }
 
 func NewDrawer() *SvgT { return new(SvgT) }
+
+
+func percent(c []byte) []byte { // convert 0..1 color lossless to percent
+  r := make([]byte, len(c)+2);
+  p := 0;
+  d := -111;
+  q := 0;
+  for p < len(c) {
+    if d == p-3 {
+      r[q] = '.';
+      q++;
+    }
+    if c[p] == '.' {
+      d = p
+    } else {
+      r[q] = c[p];
+      q++;
+    }
+    p++;
+  }
+  if d == -111 || d == p-1 {
+    r[q] = '0';
+    q++;
+    r[q] = '0';
+    q++;
+  }
+  if d == p-2 {
+    r[q] = '0';
+    q++;
+  }
+  for p = 0; p < q-1 && r[p] == '0'; p++ {
+  }
+  return r[p:q];
+}
+
+func (s *SvgT) SetGrayStroke(a []byte)      {}
+func (s *SvgT) SetGrayFill(a []byte)        {}
+func (s *SvgT) SetCMYKStroke(cmyk [][]byte) {}
+func (s *SvgT) SetCMYKFill(cmyk [][]byte)   {}
+func (s *SvgT) SetRGBStroke(rgb [][]byte) {
+  s.strokeColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
+    percent(rgb[0]),
+    percent(rgb[1]),
+    percent(rgb[2]))
+}
+func (s *SvgT) SetRGBFill(rgb [][]byte) {
+  s.fillColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
+    percent(rgb[0]),
+    percent(rgb[1]),
+    percent(rgb[2]))
+}

@@ -129,6 +129,9 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
     pd.Draw.EOFillAndStroke();
   },
   "n": func(pd *PdfDrawerT) { pd.Draw.DropPath() },
+
+  "rg": func(pd *PdfDrawerT) { pd.Color.SetRGBFill(pd.Stack.Drop(3)) },
+  "RG": func(pd *PdfDrawerT) { pd.Color.SetRGBStroke(pd.Stack.Drop(3)) },
 }
 
 func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
@@ -148,7 +151,9 @@ func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
 func NewTestSvg() *PdfDrawerT {
   r := new(PdfDrawerT);
   r.Stack = NewStack(1024);
-  r.Draw = svg.NewDrawer();
+  t := svg.NewDrawer();
+  r.Draw = t;
+  r.Color = t;
   r.Ops = PdfOps;
   return r;
 }

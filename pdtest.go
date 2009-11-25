@@ -34,10 +34,8 @@ func main() {
     //    /* To test PDF streams:
     cont := pd.ForcedArray(pd.Dic(pg[0])["/Contents"]);
     _, ps := pd.DecodedStream(cont[0]);
-    /*
-       fmt.Printf("Length of stream: %d\n%v", len(ps),
-         string(ps));
-    */
+    fmt.Printf("Length of stream: %d\n%v", len(ps),
+      string(ps));
     //    */
     test := graf.NewTestSvg();
     test.Interpret(fancy.SliceReader(ps));

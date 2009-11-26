@@ -9,7 +9,7 @@ import (
 )
 
 type SvgT struct {
-  conf *grafgs.GrafGsT;
+  conf         *grafgs.GrafGsT;
   currentPoint [][]byte;
   firstPoint   [][]byte;
   path         []string;
@@ -181,13 +181,14 @@ func (s *SvgT) RGB(rgb [][]byte) string {
 func NewTestSvg() *graf.PdfDrawerT {
   r := new(graf.PdfDrawerT);
   r.Stack = graf.NewStack(10240);
-  t := NewDrawer();
-  r.Draw = t;
-  t.conf = grafgs.New(t);
-  r.Config = t.conf;
   r.Ops = make(map[string]func(pd *graf.PdfDrawerT));
   for k := range graf.PdfOps {
     r.Ops[k] = graf.PdfOps[k]
   }
+  t := NewDrawer();
+  r.Draw = t;
+  t.conf = grafgs.New();
+  t.conf.SetColors(t);
+  r.Config = t.conf;
   return r;
 }

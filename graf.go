@@ -66,6 +66,12 @@ type DrawerState interface {
   GRestore();
 }
 
+type DrawerColor interface {
+  RGB(rgb [][]byte) string;
+  CMYK(cmyk [][]byte) string;
+  Gray(a []byte) string;
+}
+
 type DrawerConfig interface {
   SetLineWidth(a []byte);
   SetMiterLimit(a []byte);
@@ -78,12 +84,7 @@ type DrawerConfig interface {
   SetCMYKFill(cmyk [][]byte);
   SetRGBStroke(rgb [][]byte);
   SetRGBFill(rgb [][]byte);
-}
-
-type DrawerColor interface {
-  RGB(rgb [][]byte) string;
-  CMYK(cmyk [][]byte) string;
-  Gray(a []byte) string;
+  SetColors(hook DrawerColor);
 }
 
 type PdfDrawerT struct {

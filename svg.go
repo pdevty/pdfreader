@@ -5,20 +5,16 @@ import (
   "util";
   "strconv";
   "graf";
+  "grafgs";
 )
 
 type SvgT struct {
+  conf *grafgs.GrafGsT;
   currentPoint [][]byte;
   firstPoint   [][]byte;
   path         []string;
   p            int;
   groups       int;
-  strokeColor  string;
-  fillColor    string;
-  lineWidth    string;
-  miterLimit   string;
-  lineJoin     string;
-  lineCap      string;
 }
 
 func (s *SvgT) append(p string) {
@@ -86,12 +82,12 @@ func (s *SvgT) Rectangle(coords [][]byte) {
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n", s.SvgPath(), s.lineWidth, s.strokeColor);
+  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n", s.SvgPath(), s.conf.LineWidth, s.conf.StrokeColor);
   s.DropPath();
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.fillColor);
+  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.conf.FillColor);
   s.DropPath();
 }
 
@@ -164,60 +160,31 @@ func percent(c []byte) []byte { // convert 0..1 color lossless to percent
   return r[p:q];
 }
 
-func (s *SvgT) SetGrayStroke(a []byte) {
+func (s *SvgT) Gray(a []byte) string {
   c := percent(a);
-  s.strokeColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)", c, c, c);
+  return fmt.Sprintf("rgb(%s%%,%s%%,%s%%)", c, c, c);
 }
-func (s *SvgT) SetGrayFill(a []byte) {
-  c := percent(a);
-  s.fillColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)", c, c, c);
-}
-func (s *SvgT) SetCMYKStroke(cmyk [][]byte) {
-  s.strokeColor = fmt.Sprintf("cmyk(%s%%,%s%%,%s%%,%s%%)",
+func (s *SvgT) CMYK(cmyk [][]byte) string {
+  return fmt.Sprintf("cmyk(%s%%,%s%%,%s%%,%s%%)",
     percent(cmyk[0]),
     percent(cmyk[1]),
     percent(cmyk[2]),
     percent(cmyk[3]))
 }
-func (s *SvgT) SetCMYKFill(cmyk [][]byte) {
-  s.fillColor = fmt.Sprintf("cmyk(%s%%,%s%%,%s%%,%s%%)",
-    percent(cmyk[0]),
-    percent(cmyk[1]),
-    percent(cmyk[2]),
-    percent(cmyk[3]))
-}
-func (s *SvgT) SetRGBStroke(rgb [][]byte) {
-  s.strokeColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
+func (s *SvgT) RGB(rgb [][]byte) string {
+  return fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
     percent(rgb[0]),
     percent(rgb[1]),
     percent(rgb[2]))
 }
-func (s *SvgT) SetRGBFill(rgb [][]byte) {
-  s.fillColor = fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
-    percent(rgb[0]),
-    percent(rgb[1]),
-    percent(rgb[2]))
-}
-
-func (s *SvgT) SetLineWidth(a []byte) { s.lineWidth = string(a) }
-
-func (s *SvgT) SetMiterLimit(a []byte) { s.miterLimit = string(a) }
-
-func (s *SvgT) SetLineJoin(a []byte) { s.lineJoin = string(a) }
-
-func (s *SvgT) SetLineCap(a []byte) { s.lineCap = string(a) }
-
-func (s *SvgT) SetFlat(a []byte) {}
-
-
 
 func NewTestSvg() *graf.PdfDrawerT {
   r := new(graf.PdfDrawerT);
   r.Stack = graf.NewStack(10240);
   t := NewDrawer();
   r.Draw = t;
-  r.Color = t;
-  r.Config = t;
+  t.conf = grafgs.New(t);
+  r.Config = t.conf;
   r.Ops = make(map[string]func(pd *graf.PdfDrawerT));
   for k := range graf.PdfOps {
     r.Ops[k] = graf.PdfOps[k]

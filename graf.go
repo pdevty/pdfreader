@@ -72,9 +72,6 @@ type DrawerConfig interface {
   SetLineJoin(a []byte);
   SetLineCap(a []byte);
   SetFlat(a []byte);
-}
-
-type DrawerColor interface {
   SetGrayStroke(a []byte);
   SetGrayFill(a []byte);
   SetCMYKStroke(cmyk [][]byte);
@@ -83,11 +80,16 @@ type DrawerColor interface {
   SetRGBFill(rgb [][]byte);
 }
 
+type DrawerColor interface {
+  RGB(rgb [][]byte) string;
+  CMYK(cmyk [][]byte) string;
+  Gray(a []byte) string;
+}
+
 type PdfDrawerT struct {
   Draw   Drawer;
   State  DrawerState;
   Config DrawerConfig;
-  Color  DrawerColor;
   Stack  Stack;
   Ops    map[string]func(pd *PdfDrawerT);
 }
@@ -131,31 +133,31 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
   "n": func(pd *PdfDrawerT) { pd.Draw.DropPath() },
 
   "rg": func(pd *PdfDrawerT) {
-    pd.Color.SetRGBFill(pd.Stack.Drop(3));
+    pd.Config.SetRGBFill(pd.Stack.Drop(3));
     pd.Ops["sc"] = pd.Ops["rg"];
   },
   "RG": func(pd *PdfDrawerT) {
-    pd.Color.SetRGBStroke(pd.Stack.Drop(3));
+    pd.Config.SetRGBStroke(pd.Stack.Drop(3));
     pd.Ops["SC"] = pd.Ops["RG"];
 
   },
   "g": func(pd *PdfDrawerT) {
-    pd.Color.SetGrayFill(pd.Stack.Pop());
+    pd.Config.SetGrayFill(pd.Stack.Pop());
     pd.Ops["sc"] = pd.Ops["g"];
 
   },
   "G": func(pd *PdfDrawerT) {
-    pd.Color.SetGrayStroke(pd.Stack.Pop());
+    pd.Config.SetGrayStroke(pd.Stack.Pop());
     pd.Ops["SC"] = pd.Ops["G"];
 
   },
   "k": func(pd *PdfDrawerT) {
-    pd.Color.SetCMYKFill(pd.Stack.Drop(4));
+    pd.Config.SetCMYKFill(pd.Stack.Drop(4));
     pd.Ops["sc"] = pd.Ops["k"];
 
   },
   "K": func(pd *PdfDrawerT) {
-    pd.Color.SetCMYKStroke(pd.Stack.Drop(4));
+    pd.Config.SetCMYKStroke(pd.Stack.Drop(4));
     pd.Ops["SC"] = pd.Ops["K"];
 
   },
@@ -188,4 +190,3 @@ func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
     }
   }
 }
-

@@ -26,4 +26,5 @@ pdfread.$O: fancy.$O hex.$O lzw.$O
 pdtest: pdfread.$O svg.$O fancy.$O
 lzw.$O: crush.$O
 graf.$O: fancy.$O pdfread.$O
-svg.$O: util.$O graf.$O
+svg.$O: util.$O graf.$O grafgs.$O
+

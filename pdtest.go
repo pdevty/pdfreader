@@ -6,14 +6,11 @@ package main
 // defined fonts of the pages.
 
 import (
-  //  "lzw";
   "os";
-  //  "io";
   "fmt";
   "pdfread";
-  //  "hex";
   "fancy";
-  "graf";
+  "svg";
 )
 
 func main() {
@@ -37,7 +34,7 @@ func main() {
     fmt.Printf("Length of stream: %d\n%v", len(ps),
       string(ps));
     //    */
-    test := graf.NewTestSvg();
+    test := svg.NewTestSvg();
     test.Interpret(fancy.SliceReader(ps));
     test.Draw.CloseDrawing();
   }

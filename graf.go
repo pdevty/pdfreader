@@ -3,7 +3,6 @@ package graf
 import (
   "fancy";
   "pdfread";
-  "svg";
 )
 
 // Every args are in bytes here to allow lossless formate transformation.
@@ -190,16 +189,3 @@ func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
   }
 }
 
-func NewTestSvg() *PdfDrawerT {
-  r := new(PdfDrawerT);
-  r.Stack = NewStack(10240);
-  t := svg.NewDrawer();
-  r.Draw = t;
-  r.Color = t;
-  r.Config = t;
-  r.Ops = make(map[string]func(pd *PdfDrawerT));
-  for k := range PdfOps {
-    r.Ops[k] = PdfOps[k]
-  }
-  return r;
-}

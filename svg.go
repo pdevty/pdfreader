@@ -4,6 +4,7 @@ import (
   "fmt";
   "util";
   "strconv";
+  "graf";
 )
 
 type SvgT struct {
@@ -207,3 +208,19 @@ func (s *SvgT) SetLineJoin(a []byte) { s.lineJoin = string(a) }
 func (s *SvgT) SetLineCap(a []byte) { s.lineCap = string(a) }
 
 func (s *SvgT) SetFlat(a []byte) {}
+
+
+
+func NewTestSvg() *graf.PdfDrawerT {
+  r := new(graf.PdfDrawerT);
+  r.Stack = graf.NewStack(10240);
+  t := NewDrawer();
+  r.Draw = t;
+  r.Color = t;
+  r.Config = t;
+  r.Ops = make(map[string]func(pd *graf.PdfDrawerT));
+  for k := range graf.PdfOps {
+    r.Ops[k] = graf.PdfOps[k]
+  }
+  return r;
+}

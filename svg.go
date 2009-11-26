@@ -14,6 +14,10 @@ type SvgT struct {
   groups       int;
   strokeColor  string;
   fillColor    string;
+  lineWidth    string;
+  miterLimit   string;
+  lineJoin     string;
+  lineCap      string;
 }
 
 func (s *SvgT) append(p string) {
@@ -33,11 +37,12 @@ func (s *SvgT) append(p string) {
   s.p++;
 }
 
-func (s *SvgT) SvgPath() []byte {
+func (s *SvgT) SvgPath() string {
   if s.path == nil {
-    return []byte{}
+    return "path d=\"\""
   }
-  return util.JoinStrings(s.path[0:s.p], ' ');
+  return fmt.Sprintf("path d=\"%s\"",
+    util.JoinStrings(s.path[0:s.p], ' '));
 }
 
 func (s *SvgT) DropPath() { s.path = nil }
@@ -64,6 +69,7 @@ func (s *SvgT) CurveTo(coords [][]byte) {
 }
 
 func (s *SvgT) Rectangle(coords [][]byte) {
+
   x, _ := strconv.Atof(string(coords[0]));
   y, _ := strconv.Atof(string(coords[1]));
   w, _ := strconv.Atof(string(coords[2]));
@@ -79,28 +85,28 @@ func (s *SvgT) Rectangle(coords [][]byte) {
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<path d=\"%s\" fill=\"none\" stroke-width=\"1\" stroke=\"%s\" />\n\n", s.SvgPath(), s.strokeColor);
-  s.path = nil;
+  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n", s.SvgPath(), s.lineWidth, s.strokeColor);
+  s.DropPath();
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<path d=\"%s\" fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.fillColor);
-  s.path = nil;
+  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.fillColor);
+  s.DropPath();
 }
 
 func (s *SvgT) EOFill() {
-  fmt.Printf("<path d=\"%s\" />\n\n", s.SvgPath());
-  s.path = nil;
+  fmt.Printf("<%s />\n\n", s.SvgPath());
+  s.DropPath();
 }
 
 func (s *SvgT) FillAndStroke() {
-  fmt.Printf("<path d=\"%s\" />\n\n", s.SvgPath());
-  s.path = nil;
+  fmt.Printf("<%s />\n\n", s.SvgPath());
+  s.DropPath();
 }
 
 func (s *SvgT) EOFillAndStroke() {
-  fmt.Printf("<path d=\"%s\" />\n\n", s.SvgPath());
-  s.path = nil;
+  fmt.Printf("<%s />\n\n", s.SvgPath());
+  s.DropPath();
 }
 
 func (s *SvgT) Clip() {}
@@ -123,7 +129,6 @@ func (s *SvgT) CloseDrawing() {
 func (s *SvgT) SetIdentity() { s.CloseDrawing() }
 
 func NewDrawer() *SvgT { return new(SvgT) }
-
 
 func percent(c []byte) []byte { // convert 0..1 color lossless to percent
   r := make([]byte, len(c)+2);
@@ -192,3 +197,13 @@ func (s *SvgT) SetRGBFill(rgb [][]byte) {
     percent(rgb[1]),
     percent(rgb[2]))
 }
+
+func (s *SvgT) SetLineWidth(a []byte) { s.lineWidth = string(a) }
+
+func (s *SvgT) SetMiterLimit(a []byte) { s.miterLimit = string(a) }
+
+func (s *SvgT) SetLineJoin(a []byte) { s.lineJoin = string(a) }
+
+func (s *SvgT) SetLineCap(a []byte) { s.lineCap = string(a) }
+
+func (s *SvgT) SetFlat(a []byte) {}

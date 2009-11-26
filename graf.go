@@ -161,6 +161,15 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
 
   },
 
+  "w": func(pd *PdfDrawerT) { pd.Config.SetLineWidth(pd.Stack.Pop()) },
+  "J": func(pd *PdfDrawerT) { pd.Config.SetLineCap(pd.Stack.Pop()) },
+  "j": func(pd *PdfDrawerT) { pd.Config.SetLineJoin(pd.Stack.Pop()) },
+  "M": func(pd *PdfDrawerT) { pd.Config.SetMiterLimit(pd.Stack.Pop()) },
+
+  "i": func(pd *PdfDrawerT) {
+    pd.Stack.Pop() // FIXME
+  },
+
   "gs": func(pd *PdfDrawerT) {
     pd.Stack.Pop();
     pd.Draw.SetIdentity(); // FIXME ;)
@@ -187,6 +196,7 @@ func NewTestSvg() *PdfDrawerT {
   t := svg.NewDrawer();
   r.Draw = t;
   r.Color = t;
+  r.Config = t;
   r.Ops = make(map[string]func(pd *PdfDrawerT));
   for k := range PdfOps {
     r.Ops[k] = PdfOps[k]

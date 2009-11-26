@@ -161,11 +161,6 @@ var PdfOps = map[string]func(pd *PdfDrawerT){
 
   },
 
-
-  // FIXME: SC and sc ...
-
-
-
   "gs": func(pd *PdfDrawerT) {
     pd.Stack.Pop();
     pd.Draw.SetIdentity(); // FIXME ;)
@@ -192,6 +187,9 @@ func NewTestSvg() *PdfDrawerT {
   t := svg.NewDrawer();
   r.Draw = t;
   r.Color = t;
-  r.Ops = PdfOps;
+  r.Ops = make(map[string]func(pd *PdfDrawerT));
+  for k := range PdfOps {
+    r.Ops[k] = PdfOps[k]
+  }
   return r;
 }

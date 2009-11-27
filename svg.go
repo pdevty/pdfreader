@@ -11,7 +11,6 @@ import (
 type SvgT struct {
   conf         *grafgs.GrafGsT;
   currentPoint [][]byte;
-  firstPoint   [][]byte;
   path         []string;
   p            int;
   groups       int;
@@ -48,7 +47,6 @@ func (s *SvgT) CurrentPoint() [][]byte { return s.currentPoint }
 
 func (s *SvgT) MoveTo(coord [][]byte) {
   s.currentPoint = coord;
-  s.firstPoint = coord;
   s.append(fmt.Sprintf("M%s %s", coord[0], coord[1]));
 }
 

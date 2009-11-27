@@ -23,6 +23,7 @@ THE SOFTWARE.
 
 import (
   "io";
+  "bufio";
   "os";
 )
 
@@ -156,6 +157,12 @@ func (sr *SecReaderT) Slice(n int) []byte {
   return r;
 }
 
+// grmpf: Next is for AUTOGENERATE!
+// The thing here is only (!) for convenience.
+func (sr *SecReaderT) ReadBytes(delim byte) ([]byte, os.Error) {
+  return bufio.NewReader(sr).ReadBytes(delim);
+}
+
 func SecReader(f io.ReaderAt, size int64) Reader {
   sr := new(SecReaderT);
   sr.f = f;
@@ -226,6 +233,12 @@ func (sl *SliceReaderT) Slice(n int) []byte {
   return sl.bin[sl.pos-int64(n) : sl.pos];
 }
 
+// grmpf: Next is for AUTOGENERATE!
+// The thing here is only (!) for convenience.
+func (sl *SliceReaderT) ReadBytes(delim byte) ([]byte, os.Error) {
+  return bufio.NewReader(sl).ReadBytes(delim);
+}
+
 func SliceReader(bin []byte) Reader {
   r := new(SliceReaderT);
   r.bin = bin;
@@ -259,3 +272,5 @@ func ReadAll(f io.Reader) []byte {
   r, _ := io.ReadAll(f);
   return r;
 }
+
+// ------------------------------------------------------------------

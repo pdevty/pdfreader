@@ -160,7 +160,7 @@ func (sr *SecReaderT) Slice(n int) []byte {
 // grmpf: Next is for AUTOGENERATE!
 // The thing here is only (!) for convenience.
 func (sr *SecReaderT) ReadBytes(delim byte) ([]byte, os.Error) {
-  return bufio.NewReader(sr).ReadBytes(delim);
+  return bufio.NewReader(sr).ReadBytes(delim)
 }
 
 func SecReader(f io.ReaderAt, size int64) Reader {
@@ -236,7 +236,7 @@ func (sl *SliceReaderT) Slice(n int) []byte {
 // grmpf: Next is for AUTOGENERATE!
 // The thing here is only (!) for convenience.
 func (sl *SliceReaderT) ReadBytes(delim byte) ([]byte, os.Error) {
-  return bufio.NewReader(sl).ReadBytes(delim);
+  return bufio.NewReader(sl).ReadBytes(delim)
 }
 
 func SliceReader(bin []byte) Reader {

@@ -20,3 +20,35 @@ func JoinStrings(a []string, c byte) []byte {
   }
   return r[0 : l-1];
 }
+
+type StackT struct {
+  st [][]byte;
+  sp int;
+}
+
+func (st *StackT) Push(s []byte) {
+  st.st[st.sp] = s;
+  st.sp++;
+}
+
+func (st *StackT) Drop(n int) [][]byte {
+  st.sp -= n;
+  return st.st[st.sp : st.sp+n];
+}
+
+func (st *StackT) Pop() []byte {
+  st.sp--;
+  return st.st[st.sp];
+}
+
+func NewStack(n int) *StackT {
+  r := new(StackT);
+  r.st = make([][]byte, n);
+  return r;
+}
+
+type Stack interface {
+  Push([]byte);
+  Pop() []byte;
+  Drop(int) (st [][]byte);
+}

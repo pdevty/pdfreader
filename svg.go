@@ -5,15 +5,13 @@ import (
   "util";
   "strconv";
   "graf";
-  "grafgs";
 )
 
 type SvgT struct {
-  conf         *grafgs.GrafGsT;
-  currentPoint [][]byte;
-  path         []string;
-  p            int;
-  groups       int;
+  conf   *graf.DrawerConfigT;
+  path   []string;
+  p      int;
+  groups int;
 }
 
 func (s *SvgT) append(p string) {
@@ -41,26 +39,15 @@ func (s *SvgT) SvgPath() string {
     util.JoinStrings(s.path[0:s.p], ' '));
 }
 
-func (s *SvgT) DropPath() { s.path = nil }
-
-func (s *SvgT) CurrentPoint() [][]byte { return s.currentPoint }
-
-func (s *SvgT) MoveTo(coord [][]byte) {
-  s.currentPoint = coord;
-  s.append(fmt.Sprintf("M%s %s", coord[0], coord[1]));
-}
-
-func (s *SvgT) LineTo(coord [][]byte) {
-  s.currentPoint = coord;
-  s.append(fmt.Sprintf("L%s %s", coord[0], coord[1]));
-}
+func (s *SvgT) DropPath()             { s.path = nil }
+func (s *SvgT) MoveTo(coord [][]byte) { s.append(fmt.Sprintf("M%s %s", coord[0], coord[1])) }
+func (s *SvgT) LineTo(coord [][]byte) { s.append(fmt.Sprintf("L%s %s", coord[0], coord[1])) }
 
 func (s *SvgT) CurveTo(coords [][]byte) {
-  s.currentPoint = coords[4:5];
   s.append(fmt.Sprintf("C%s %s %s %s %s %s",
     coords[0], coords[1],
     coords[2], coords[3],
-    coords[4], coords[5]));
+    coords[4], coords[5]))
 }
 
 func (s *SvgT) Rectangle(coords [][]byte) {
@@ -70,7 +57,6 @@ func (s *SvgT) Rectangle(coords [][]byte) {
   w, _ := strconv.Atof(string(coords[2]));
   h, _ := strconv.Atof(string(coords[3]));
 
-  s.currentPoint = coords[0:1];
   s.append(fmt.Sprintf("M%s %s V%f H%f V%s H%s Z",
     coords[0], coords[1],
     y+h, x+w,
@@ -80,33 +66,18 @@ func (s *SvgT) Rectangle(coords [][]byte) {
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n", s.SvgPath(), s.conf.LineWidth, s.conf.StrokeColor);
-  s.DropPath();
+  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n", s.SvgPath(), s.conf.LineWidth, s.conf.StrokeColor)
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.conf.FillColor);
-  s.DropPath();
+  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.conf.FillColor)
 }
 
-func (s *SvgT) EOFill() {
-  fmt.Printf("<%s />\n\n", s.SvgPath());
-  s.DropPath();
-}
-
-func (s *SvgT) FillAndStroke() {
-  fmt.Printf("<%s />\n\n", s.SvgPath());
-  s.DropPath();
-}
-
-func (s *SvgT) EOFillAndStroke() {
-  fmt.Printf("<%s />\n\n", s.SvgPath());
-  s.DropPath();
-}
-
-func (s *SvgT) Clip() {}
-
-func (s *SvgT) EOClip() {}
+func (s *SvgT) EOFill()          { fmt.Printf("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) FillAndStroke()   { fmt.Printf("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) EOFillAndStroke() { fmt.Printf("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) Clip()            {}
+func (s *SvgT) EOClip()          {}
 
 func (s *SvgT) Concat(m [][]byte) {
   fmt.Printf("<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n\n",
@@ -114,16 +85,14 @@ func (s *SvgT) Concat(m [][]byte) {
   s.groups++;
 }
 
-func (s *SvgT) CloseDrawing() {
+func (s *SvgT) SetIdentity() {
   for s.groups > 0 {
     fmt.Printf("</g>\n");
     s.groups--;
   }
 }
 
-func (s *SvgT) SetIdentity() { s.CloseDrawing() }
-
-func NewDrawer() *SvgT { return new(SvgT) }
+func (s *SvgT) CloseDrawing() { s.SetIdentity() }
 
 func percent(c []byte) []byte { // convert 0..1 color lossless to percent
   r := make([]byte, len(c)+2);
@@ -177,16 +146,10 @@ func (s *SvgT) RGB(rgb [][]byte) string {
 }
 
 func NewTestSvg() *graf.PdfDrawerT {
-  r := new(graf.PdfDrawerT);
-  r.Stack = graf.NewStack(10240);
-  r.Ops = make(map[string]func(pd *graf.PdfDrawerT));
-  for k := range graf.PdfOps {
-    r.Ops[k] = graf.PdfOps[k]
-  }
-  t := NewDrawer();
+  r, dc, _ := graf.NewPdfDrawer();
+  t := new(SvgT);
+  dc.SetColors(t);
+  t.conf = dc;
   r.Draw = t;
-  t.conf = grafgs.New();
-  t.conf.SetColors(t);
-  r.Config = t.conf;
   return r;
 }

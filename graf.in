@@ -260,13 +260,13 @@ Ts  Rise      1
   V: FontSize string
 
 = Text DrawerText .
-Td  TMoveTo 2
+Td  TMoveTo    2
 TD  *          *
   +  // FIXME
   +  pd.Stack.Drop(2);
 Tm  TSetMatrix 6
-T*  TNextLine 0
-Tj  TShow 1
+T*  TNextLine  0
+Tj  TShow      1
 '   *          *
   +  pd.Text.TNextLine();
   +  pd.Text.TShow(pd.Stack.Pop());
@@ -276,7 +276,21 @@ Tj  TShow 1
   +  pd.TConf.SetCharSpace(t[1]);
   +  pd.Text.TNextLine();
   +  pd.Text.TShow(t[3]);
-TJ  TShow 1
+TJ  TShow      1
+BT  *          *
+ET  *          *
+
+= Marker DocumentMarker .
+MP  *          *
+  +  pd.Stack.Pop();
+DP  *          *
+  +  pd.Stack.Drop(2);
+BMC *          *
+  +  pd.Stack.Pop();
+BDC *          *
+  +  pd.Stack.Drop(2);
+EMC *          *
+
 %%
 
 func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {

@@ -37,5 +37,6 @@ func main() {
     test := svg.NewTestSvg();
     test.Interpret(fancy.SliceReader(ps));
     test.Draw.CloseDrawing();
+    fmt.Printf("%v\n", test.Stack.Dump());
   }
 }

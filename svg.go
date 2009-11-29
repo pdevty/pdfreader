@@ -3,12 +3,13 @@ package svg
 import (
   "fmt";
   "util";
-  "strconv";
+  "strm";
   "graf";
 )
 
 type SvgT struct {
   conf   *graf.DrawerConfigT;
+  tconf  *graf.TextConfigT;
   path   []string;
   p      int;
   groups int;
@@ -51,15 +52,10 @@ func (s *SvgT) CurveTo(coords [][]byte) {
 }
 
 func (s *SvgT) Rectangle(coords [][]byte) {
-
-  x, _ := strconv.Atof(string(coords[0]));
-  y, _ := strconv.Atof(string(coords[1]));
-  w, _ := strconv.Atof(string(coords[2]));
-  h, _ := strconv.Atof(string(coords[3]));
-
-  s.append(fmt.Sprintf("M%s %s V%f H%f V%s H%s Z",
+  s.append(fmt.Sprintf("M%s %s V%s H%s V%s H%s Z",
     coords[0], coords[1],
-    y+h, x+w,
+    strm.Add(string(coords[1]), string(coords[3])),
+    strm.Add(string(coords[0]), string(coords[2])),
     coords[1], coords[0]));
 }
 
@@ -145,11 +141,10 @@ func (s *SvgT) RGB(rgb [][]byte) string {
     percent(rgb[2]))
 }
 
-func NewTestSvg() *graf.PdfDrawerT {
-  r, dc, _ := graf.NewPdfDrawer();
+func NewTestSvg() (r *graf.PdfDrawerT) {
   t := new(SvgT);
-  dc.SetColors(t);
-  t.conf = dc;
+  r, t.conf, t.tconf = graf.NewPdfDrawer();
+  t.conf.SetColors(t);
   r.Draw = t;
   return r;
 }

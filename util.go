@@ -21,6 +21,16 @@ func JoinStrings(a []string, c byte) []byte {
   return r[0 : l-1];
 }
 
+func StringArray(i [][]byte) []string {
+  r := make([]string, len(i));
+  for k := range i {
+    r[k] = string(i[k])
+  }
+  return r;
+}
+
+// Stacks
+
 type StackT struct {
   st [][]byte;
   sp int;
@@ -41,9 +51,7 @@ func (st *StackT) Pop() []byte {
   return st.st[st.sp];
 }
 
-func (st *StackT) Dump() [][]byte {
-  return st.st[0:st.sp];
-}
+func (st *StackT) Dump() [][]byte { return st.st[0:st.sp] }
 
 func NewStack(n int) *StackT {
   r := new(StackT);

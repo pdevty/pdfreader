@@ -11,6 +11,7 @@ import (
   "pdfread";
   "fancy";
   "svg";
+  "svgtext";
 )
 
 func main() {
@@ -35,6 +36,9 @@ func main() {
       string(ps));
     //    */
     test := svg.NewTestSvg();
+    st := svgtext.New();
+    st.Pdf = pd;
+    test.Text = st;
     test.Interpret(fancy.SliceReader(ps));
     test.Draw.CloseDrawing();
     fmt.Printf("%v\n", test.Stack.Dump());

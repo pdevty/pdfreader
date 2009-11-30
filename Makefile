@@ -31,3 +31,4 @@ pdtest: pdfread.$O svg.$O svgtext.$O fancy.$O
 lzw.$O: crush.$O
 graf.$O: util.$O fancy.$O pdfread.$O
 svg.$O: util.$O graf.$O strm.$O
+

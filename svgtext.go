@@ -3,7 +3,7 @@ package svgtext
 import (
   "pdfread";
   "graf";
-//  "fmt";
+  //  "fmt";
   "util";
 )
 
@@ -34,7 +34,7 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) { t.matrix = util.StringArray(s) }
 func (t *SvgTextT) TShow(a []byte) {
   tx := t.Pdf.ForcedArray(a); // FIXME: Should be "ForcedSimpleArray()"
   for k := range tx {
-//    fmt.Printf("<!-- %s,%s: %s -->\n", t.matrix[4], t.matrix[5], tx[k])
-    _ = k;
+    //    fmt.Printf("<!-- %s,%s: %s -->\n", t.matrix[4], t.matrix[5], tx[k])
+    _ = k
   }
 }

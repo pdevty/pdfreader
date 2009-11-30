@@ -56,7 +56,7 @@ func (s *SvgT) Rectangle(coords [][]byte) {
     coords[0], coords[1],
     strm.Add(string(coords[1]), string(coords[3])),
     strm.Add(string(coords[0]), string(coords[2])),
-    coords[1], coords[0]));
+    coords[1], coords[0]))
 }
 
 func (s *SvgT) ClosePath() { s.append("Z") }

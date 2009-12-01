@@ -31,6 +31,17 @@ func operand(s string) (r int64, f int) {
   return;
 }
 
+func Int64(s string, f int) int64 {
+  ra, fa := operand(s);
+  for fa < f {
+    fa *= 10;
+    ra *= 10;
+  }
+  return ra / int64(fa/f);
+}
+
+func Int(s string, f int) int { return int(Int64(s, f)) }
+
 func twop(a, b string) (ra, rb int64, f int) {
   ra, f = operand(a);
   rb, fb := operand(b);
@@ -45,7 +56,7 @@ func twop(a, b string) (ra, rb int64, f int) {
   return;
 }
 
-func out(a int64, f int) string {
+func String(a int64, f int) string {
   buf := make([]byte, 128);
   p := 0;
   if a < 0 {
@@ -87,17 +98,17 @@ func Mul(a, b string) string {
     i = i.Div(bignum.Int(int64(d / uint64(f))));
     d = uint64(f);
   }
-  return out(i.Value(), int(d));
+  return String(i.Value(), int(d));
 }
 
 func Add(a, b string) string {
   ra, rb, f := twop(a, b);
-  return out(ra+rb, f);
+  return String(ra+rb, f);
 }
 
 func Sub(a, b string) string {
   ra, rb, f := twop(a, b);
-  return out(ra-rb, f);
+  return String(ra-rb, f);
 }
 
 func Neg(a string) string {
@@ -105,5 +116,5 @@ func Neg(a string) string {
     return a[1:len(a)]
   }
   ra, f := operand(a);
-  return out(-ra, f);
+  return String(-ra, f);
 }

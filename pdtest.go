@@ -10,6 +10,7 @@ import (
   "fmt";
   "pdfread";
   "fancy";
+  "graf";
   "svg";
   "svgtext";
 )
@@ -30,14 +31,17 @@ func main() {
     }
 
     //    /* To test PDF streams:
-    cont := pd.ForcedArray(pd.Dic(pg[0])["/Contents"]);
+    cont := pd.ForcedArray(pd.Dic(pg[1])["/Contents"]);
     _, ps := pd.DecodedStream(cont[0]);
     fmt.Printf("Length of stream: %d\n%v", len(ps),
       string(ps));
     //    */
     test := svg.NewTestSvg();
     st := svgtext.New();
+    st.Conf = new(graf.TextConfigT);
+    test.TConf = st.Conf;
     st.Pdf = pd;
+    st.Page = 1;
     test.Text = st;
     test.Interpret(fancy.SliceReader(ps));
     test.Draw.CloseDrawing();

@@ -1,5 +1,13 @@
 package util
 
+func StrToByte(a string) []byte {
+  r := make([]byte, len(a));
+  for k := range a {
+    r[k] = byte(a[k]);
+  }
+  return r;
+}
+
 func JoinStrings(a []string, c byte) []byte {
   if a == nil {
     return []byte{}

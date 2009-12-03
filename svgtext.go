@@ -7,7 +7,83 @@ import (
   "util";
   "utf8";
   "strm";
+  "io";
 )
+
+// ------------------------------------------------ Font Substitution
+
+const DEFAULT_FSTYLE = "font-family:Arial;"
+
+func csvtok(d []byte) []byte {
+  p := 0;
+  for ; p < len(d); p++ {
+    if d[p] < 32 {
+      break
+    }
+  }
+  return d[0:p];
+}
+
+func endcsvl(d []byte) int {
+  p := 0;
+  for ; p < len(d); p++ {
+    if d[p] == 10 {
+      break
+    }
+  }
+  return p + 1;
+}
+
+var fileNames, // will be needed for SVG font inclusion
+  styles map[string]string
+
+func fontnamemap(fn string) int {
+  if fileNames == nil {
+    fileNames = make(map[string]string)
+  }
+  if styles == nil {
+    styles = make(map[string]string)
+  }
+
+  data, _ := io.ReadFile(fn);
+  no := 0;
+  for p := 0; p < len(data); {
+    n := string(csvtok(data[p:len(data)]));
+    p += len(n) + 1;
+    f := string(csvtok(data[p:len(data)]));
+    p += len(f) + 1;
+    s := string(csvtok(data[p:len(data)]));
+    p += len(s);
+    p += endcsvl(data[p:len(data)]);
+    fileNames[n] = f;
+    styles[n] = s;
+    no++;
+  }
+  return no;
+}
+
+var numFonts = fontnamemap("fontnamemap.txt") // initialize fileNames and styles
+
+func FStyle(f string) string {
+  if f[0] == '/' { f = f[1:len(f)] }
+  if r, ok := styles[f]; ok {
+    return r;
+  }
+  q := 0;
+  for ; q < len(f); q++ {
+    if f[q] == '+' { break }
+  }
+  if q < len(f) {
+    f = f[q+1: len(f)];
+  }
+  if r, ok := styles[f]; ok {
+    return r;
+  }
+  return DEFAULT_FSTYLE
+}
+
+// ------------------------------------------------
+
 
 func unquot(a []byte) []byte { // STUB! FIXME!
   if a[0] != '(' {
@@ -32,13 +108,30 @@ type SvgTextT struct {
   Page   int;
   fonts  pdfread.DictionaryT;
   fontw  map[string][]int64;
-  x, y   string;
+  x0, x, y   string;
 }
 
 func New() *SvgTextT {
   r := new(SvgTextT);
   r.matrix = []string{"1", "0", "0", "1", "0", "0"};
   return r;
+}
+
+func (t *SvgTextT) style(font string) (r string) {
+  r = DEFAULT_FSTYLE;
+  if t.fonts == nil {
+    t.fonts = t.Pdf.PageFonts(t.Pdf.Pages()[t.Page]);
+    if t.fonts == nil {
+      return
+    }
+  }
+  if dr, ok := t.fonts[font]; ok {
+    d := t.Pdf.Dic(dr);
+    if fd, ok := d["/FontDescriptor"]; ok { // FIXME: Too simple...
+      return FStyle(string(t.Pdf.Dic(fd)["/FontName"]));
+    }
+  }
+  return
 }
 
 func (t *SvgTextT) widths(font string) (r []int64) {
@@ -102,16 +195,20 @@ func (t *SvgTextT) Utf8Advance(s []byte) ([]byte, string) {
 }
 
 func (t *SvgTextT) TMoveTo(s [][]byte) {
-  t.matrix[4], t.matrix[5] = string(s[0]), string(s[1]);
-  t.x = "0";
-  t.y = "0";
+  t.x0 = strm.Add(t.x0, string(s[0]));
+  t.x = t.x0;
+  t.y = strm.Add(t.y, string(s[1]));
 }
 
-func (t *SvgTextT) TNextLine() {}
+func (t *SvgTextT) TNextLine() {
+  t.x = t.x0;
+  t.y = strm.Sub(t.y, t.Conf.Leading);
+}
 
 func (t *SvgTextT) TSetMatrix(s [][]byte) {
   t.matrix = util.StringArray(s);
-  t.x = "0";
+  t.x0 = "0";
+  t.x = t.x0;
   t.y = "0";
 }
 
@@ -123,19 +220,20 @@ func (t *SvgTextT) TShow(a []byte) {
       tmp, adv := t.Utf8Advance(tx[k]);
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"
-        "<text x=\"%s\" y=\"%s\""
-        " font-family=\"Arial\" font-size=\"%s\" stroke=\"none\""
-        " font-weight=\"bold\""
-        " fill=\"black\">%s</text>\n"
-        "</g>\n",
+          "<text x=\"%s\" y=\"%s\""
+          " font-size=\"%s\" stroke=\"none\""
+          " style=\"%v\""
+          " fill=\"black\">%s</text>\n"
+          "</g>\n",
         t.matrix[0], t.matrix[1], t.matrix[2], t.matrix[3], t.matrix[4], t.matrix[5],
         t.x, t.y,
         t.Conf.FontSize,
+        t.style(t.Conf.Font),
         tmp
-        );
+);
       t.x = strm.Add(t.x, adv);
     } else {
-      t.x = strm.Add(t.x, strm.Mul(string(tx[k]), "0.001"));
+      t.x = strm.Add(t.x, strm.Mul(string(tx[k]), "0.001"))
     }
   }
 }

@@ -23,10 +23,10 @@ for (@ARGV) {
       next if !-f "$1.go";
       $deps{$1} = 1;
     }
-    if (scalar(%deps)) {
-      print "$k.\$O:";
-      print " $_.\$O" for sort keys %deps;
-      print "\n";       
-    }
+  }
+  if (scalar(%deps)) {
+    print "$k.\$O:";
+    print " $_.\$O" for sort keys %deps;
+    print "\n";       
   }
 }

@@ -3,7 +3,7 @@ package util
 func StrToByte(a string) []byte {
   r := make([]byte, len(a));
   for k := range a {
-    r[k] = byte(a[k]);
+    r[k] = byte(a[k])
   }
   return r;
 }

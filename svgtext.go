@@ -10,6 +10,27 @@ import (
   "io";
 )
 
+const WIDTH_DENSITY = 10000
+
+type SvgTextT struct {
+  Pdf      *pdfread.PdfReaderT;
+  Drw      *graf.PdfDrawerT;
+  Page     int;
+  matrix   []string;
+  fonts    pdfread.DictionaryT;
+  fontw    map[string][]int64;
+  x0, x, y string;
+}
+
+func New(pdf *pdfread.PdfReaderT, drw *graf.PdfDrawerT) *SvgTextT {
+  r := new(SvgTextT);
+  drw.Text = r;
+  r.Drw = drw;
+  r.Pdf = pdf;
+  r.TSetMatrix(nil);
+  return r;
+}
+
 // ------------------------------------------------ Font Substitution
 
 const DEFAULT_FSTYLE = "font-family:Arial;"
@@ -65,25 +86,28 @@ func fontnamemap(fn string) int {
 var numFonts = fontnamemap("fontnamemap.txt") // initialize fileNames and styles
 
 func FStyle(f string) string {
-  if f[0] == '/' { f = f[1:len(f)] }
+  if f[0] == '/' {
+    f = f[1:len(f)]
+  }
   if r, ok := styles[f]; ok {
-    return r;
+    return r
   }
   q := 0;
   for ; q < len(f); q++ {
-    if f[q] == '+' { break }
+    if f[q] == '+' {
+      break
+    }
   }
   if q < len(f) {
-    f = f[q+1: len(f)];
+    f = f[q+1 : len(f)]
   }
   if r, ok := styles[f]; ok {
-    return r;
+    return r
   }
-  return DEFAULT_FSTYLE
+  return DEFAULT_FSTYLE;
 }
 
 // ------------------------------------------------
-
 
 func unquot(a []byte) []byte { // STUB! FIXME!
   if a[0] != '(' {
@@ -98,26 +122,7 @@ func unquot(a []byte) []byte { // STUB! FIXME!
   return r[0:p]; // removes braces only.
 }
 
-const WIDTH_DENSITY = 10000
-
-type SvgTextT struct {
-  Pdf    *pdfread.PdfReaderT;
-  Drw    *graf.PdfDrawerT;
-  Conf   *graf.TextConfigT;
-  matrix []string;
-  Page   int;
-  fonts  pdfread.DictionaryT;
-  fontw  map[string][]int64;
-  x0, x, y   string;
-}
-
-func New() *SvgTextT {
-  r := new(SvgTextT);
-  r.matrix = []string{"1", "0", "0", "1", "0", "0"};
-  return r;
-}
-
-func (t *SvgTextT) style(font string) (r string) {
+func (t *SvgTextT) Style(font string) (r string) {
   r = DEFAULT_FSTYLE;
   if t.fonts == nil {
     t.fonts = t.Pdf.PageFonts(t.Pdf.Pages()[t.Page]);
@@ -128,10 +133,10 @@ func (t *SvgTextT) style(font string) (r string) {
   if dr, ok := t.fonts[font]; ok {
     d := t.Pdf.Dic(dr);
     if fd, ok := d["/FontDescriptor"]; ok { // FIXME: Too simple...
-      return FStyle(string(t.Pdf.Dic(fd)["/FontName"]));
+      return FStyle(string(t.Pdf.Dic(fd)["/FontName"]))
     }
   }
-  return
+  return;
 }
 
 func (t *SvgTextT) widths(font string) (r []int64) {
@@ -177,7 +182,7 @@ func (t *SvgTextT) widths(font string) (r []int64) {
 }
 
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
-  w := t.widths(t.Conf.Font);
+  w := t.widths(t.Drw.TConfD.Font);
   if s[0] != '(' {
     return []byte{}, 0
   }
@@ -191,22 +196,26 @@ func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
 
 func (t *SvgTextT) Utf8Advance(s []byte) ([]byte, string) {
   r, a := t.Utf8TsAdvance(s);
-  return r, strm.Mul(t.Conf.FontSize, strm.String(a, WIDTH_DENSITY));
+  return r, strm.Mul(t.Drw.TConfD.FontSize, strm.String(a, WIDTH_DENSITY));
 }
 
 func (t *SvgTextT) TMoveTo(s [][]byte) {
   t.x0 = strm.Add(t.x0, string(s[0]));
   t.x = t.x0;
-  t.y = strm.Add(t.y, string(s[1]));
+  t.y = strm.Sub(t.y, string(s[1]));
 }
 
 func (t *SvgTextT) TNextLine() {
   t.x = t.x0;
-  t.y = strm.Sub(t.y, t.Conf.Leading);
+  t.y = strm.Add(t.y, t.Drw.TConfD.Leading);
 }
 
 func (t *SvgTextT) TSetMatrix(s [][]byte) {
-  t.matrix = util.StringArray(s);
+  if s == nil {
+    t.matrix = []string{"1", "0", "0", "1", "0", "0"};
+  } else {
+    t.matrix = util.StringArray(s);
+  }
   t.x0 = "0";
   t.x = t.x0;
   t.y = "0";
@@ -223,17 +232,19 @@ func (t *SvgTextT) TShow(a []byte) {
           "<text x=\"%s\" y=\"%s\""
           " font-size=\"%s\" stroke=\"none\""
           " style=\"%v\""
-          " fill=\"black\">%s</text>\n"
+          " fill=\"%s\">%s</text>\n"
           "</g>\n",
-        t.matrix[0], t.matrix[1], t.matrix[2], t.matrix[3], t.matrix[4], t.matrix[5],
+        t.matrix[0], t.matrix[1],
+        strm.Neg(t.matrix[2]), strm.Neg(t.matrix[3]),
+        t.matrix[4], t.matrix[5],
         t.x, t.y,
-        t.Conf.FontSize,
-        t.style(t.Conf.Font),
-        tmp
-);
+        t.Drw.TConfD.FontSize,
+        t.Style(t.Drw.TConfD.Font),
+        t.Drw.ConfigD.FillColor,
+        tmp);
       t.x = strm.Add(t.x, adv);
     } else {
-      t.x = strm.Add(t.x, strm.Mul(string(tx[k]), "0.001"))
+      t.x = strm.Sub(t.x, strm.Mul(string(tx[k]), "0.001"))
     }
   }
 }

@@ -7,7 +7,9 @@ import (
 )
 
 func operand(s string) (r int64, f int) {
-  if len(s) < 1 { return 0, 1 }
+  if len(s) < 1 {
+    return 0, 1
+  }
   sig := s[0] == '-';
   p := 0;
   if sig {

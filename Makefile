@@ -1,7 +1,7 @@
 include $(GOROOT)/src/Make.$(GOARCH)
 
 FMT = gofmt -spaces -tabwidth=2
-ALL = graf.go pdtest
+ALL = graf.go pdtosvg pdtest
 PIGGY = *.$O DEADJOE
 
 all: $(ALL)
@@ -15,6 +15,11 @@ all: $(ALL)
 %.go: %.in
 	perl $*.in | $(FMT) >$*.go
 
+depend:
+	./mkdepend *.go <Makefile >mkf.new && \
+	mv -f Makefile Makefile~ && \
+	mv -f mkf.new Makefile
+
 fmt:
 	for a in *.go ; do \
 	  $(FMT) $$a >$$a.new && mv $$a $$a~ && mv $$a.new $$a ; \
@@ -26,9 +31,10 @@ clean:
 distclean: clean
 	-rm $(ALL) $(PIGGY)
 
-pdfread.$O: fancy.$O hex.$O lzw.$O
-pdtest: pdfread.$O svg.$O svgtext.$O fancy.$O
+# -- depends --
 lzw.$O: crush.$O
-graf.$O: util.$O fancy.$O pdfread.$O strm.$O
-svg.$O: util.$O graf.$O strm.$O
-
+pdfread.$O: fancy.$O hex.$O lzw.$O
+pdtest.$O: fancy.$O pdfread.$O svg.$O svgtext.$O util.$O
+pdtosvg.$O: fancy.$O pdfread.$O svg.$O svgtext.$O util.$O
+svg.$O: strm.$O util.$O
+svgtext.$O: pdfread.$O strm.$O util.$O

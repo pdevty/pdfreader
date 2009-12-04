@@ -8,8 +8,7 @@ import (
 )
 
 type SvgT struct {
-  conf   *graf.DrawerConfigT;
-  tconf  *graf.TextConfigT;
+  Parent *graf.PdfDrawerT;
   path   []string;
   p      int;
   groups int;
@@ -62,11 +61,13 @@ func (s *SvgT) Rectangle(coords [][]byte) {
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n", s.SvgPath(), s.conf.LineWidth, s.conf.StrokeColor)
+  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n",
+    s.SvgPath(), s.Parent.ConfigD.LineWidth, s.Parent.ConfigD.StrokeColor)
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n", s.SvgPath(), s.conf.FillColor)
+  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n",
+    s.SvgPath(), s.Parent.ConfigD.FillColor)
 }
 
 func (s *SvgT) EOFill()          { fmt.Printf("<%s />\n\n", s.SvgPath()) }
@@ -141,10 +142,10 @@ func (s *SvgT) RGB(rgb [][]byte) string {
     percent(rgb[2]))
 }
 
-func NewTestSvg() (r *graf.PdfDrawerT) {
+func NewTestSvg() *graf.PdfDrawerT {
   t := new(SvgT);
-  r, t.conf, t.tconf = graf.NewPdfDrawer();
-  t.conf.SetColors(t);
-  r.Draw = t;
-  return r;
+  t.Parent = graf.NewPdfDrawer();
+  t.Parent.ConfigD.SetColors(t);
+  t.Parent.Draw = t;
+  return t.Parent;
 }

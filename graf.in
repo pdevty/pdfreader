@@ -29,7 +29,9 @@ EOT
 my @PdfDrawer = (
   "  Stack util.Stack;",
   "  Ops map[string]func(pd *PdfDrawerT);",
-  "  CurrentPoint [][]byte;"
+  "  CurrentPoint [][]byte;",
+  "  ConfigD *DrawerConfigT;",
+  "  TConfD *TextConfigT;",
 );
 
 while (<DATA>) {
@@ -280,6 +282,7 @@ Tj  TShow      1
   +  pd.Text.TShow(t[3]);
 TJ  TShow      1
 BT  *          *
+  +  pd.Text.TSetMatrix(nil);
 ET  *          *
 
 = Marker DocumentMarker .
@@ -312,19 +315,19 @@ func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
 
 // "constructor"
 
-func NewPdfDrawer() (*PdfDrawerT, *DrawerConfigT, *TextConfigT) {
+func NewPdfDrawer() *PdfDrawerT {
   r := new(PdfDrawerT);
   r.Stack = util.NewStack(1024);
   r.Ops = make(map[string]func(pd *PdfDrawerT));
   for k := range PdfOps {
     r.Ops[k] = PdfOps[k]
   }
-  dc := new(DrawerConfigT);
-  r.Config = dc;
-  tc := new(TextConfigT);
-  r.TConf = tc;
-  r.Text = tc;
-  return r, dc, tc;
+  r.ConfigD = new(DrawerConfigT);
+  r.Config = r.ConfigD;
+  r.TConfD = new(TextConfigT);
+  r.TConf = r.TConfD;
+  r.Text = r.TConfD;
+  return r;
 }
 
 // few glue code to get interfaces working.

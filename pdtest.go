@@ -9,8 +9,8 @@ import (
   "os";
   "fmt";
   "pdfread";
+  "util";
   "fancy";
-  "graf";
   "svg";
   "svgtext";
 )
@@ -37,14 +37,9 @@ func main() {
       string(ps));
     //    */
     test := svg.NewTestSvg();
-    st := svgtext.New();
-    st.Conf = new(graf.TextConfigT);
-    test.TConf = st.Conf;
-    st.Pdf = pd;
-    st.Page = 1;
-    test.Text = st;
+    svgtext.New(pd, test);
     test.Interpret(fancy.SliceReader(ps));
     test.Draw.CloseDrawing();
-    fmt.Printf("%v\n", test.Stack.Dump());
+    fmt.Printf("%v\n", util.StringArray(test.Stack.Dump()));
   }
 }

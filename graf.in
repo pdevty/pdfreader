@@ -266,7 +266,7 @@ Ts  Rise      1
 Td  TMoveTo    2
 TD  *          *
   +  a := pd.Stack.Drop(2);
-  +  pd.TConf.SetLeading(util.StrToByte(strm.Neg(string(a[1]))));
+  +  pd.TConf.SetLeading(util.Bytes(strm.Neg(string(a[1]))));
   +  pd.Text.TMoveTo(a);
 Tm  TSetMatrix 6
 T*  TNextLine  0

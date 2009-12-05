@@ -36,7 +36,7 @@ distclean: clean
 graf.$O: fancy.$O pdfread.$O strm.$O util.$O
 lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O
-pdtest.$O: fancy.$O pdfread.$O svg.$O svgtext.$O util.$O
-pdtosvg.$O: fancy.$O pdfread.$O svg.$O svgtext.$O util.$O
+pdtest.$O: pdfread.$O
+pdtosvg.$O: fancy.$O pdfread.$O strm.$O svg.$O svgtext.$O util.$O
 svg.$O: graf.$O strm.$O util.$O
 svgtext.$O: graf.$O pdfread.$O strm.$O util.$O

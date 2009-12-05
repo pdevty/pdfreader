@@ -212,9 +212,9 @@ func (t *SvgTextT) TNextLine() {
 
 func (t *SvgTextT) TSetMatrix(s [][]byte) {
   if s == nil {
-    t.matrix = []string{"1", "0", "0", "1", "0", "0"};
+    t.matrix = []string{"1", "0", "0", "1", "0", "0"}
   } else {
-    t.matrix = util.StringArray(s);
+    t.matrix = util.StringArray(s)
   }
   t.x0 = "0";
   t.x = t.x0;

@@ -11,7 +11,7 @@ import (
 
 var (
   Others []string;
-  oc int
+  oc     int;
 )
 
 func init() {
@@ -48,9 +48,12 @@ func Read(f fancy.Reader) []int {
         ci, _ := strconv.Btoi64(string(ch[1:len(ch)-1]), 16);
         ti, _ := strconv.Btoi64(string(tr[1:len(tr)-1]), 16);
         switch ti {
-        case '<': ti = -1;
-        case '>': ti = -2;
-        case '&': ti = -3;
+        case '<':
+          ti = -1
+        case '>':
+          ti = -2
+        case '&':
+          ti = -3
         }
         r[int(ci)] = int(ti);
       }
@@ -62,7 +65,7 @@ func Read(f fancy.Reader) []int {
 }
 
 func Decode(s []byte, m []int) []byte {
-  r := make([]byte, len(s) * 6);
+  r := make([]byte, len(s)*6);
   p := 0;
   for k := range s {
     if m[s[k]] < 0 {

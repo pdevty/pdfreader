@@ -31,6 +31,7 @@ import (
   "strm";
   "io";
   "cmap";
+  "unquot";
 )
 
 const WIDTH_DENSITY = 10000
@@ -195,10 +196,7 @@ var cm_identity = cmap.Read(nil)
 
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
   w := t.widths(t.Drw.TConfD.Font);
-  if s[0] != '(' {
-    return []byte{}, 0
-  }
-  z := s[1 : len(s)-1];
+  z := unquot.String(s);
   width := int64(0);
   for k := range z {
     width += w[z[k]]

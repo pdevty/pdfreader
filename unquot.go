@@ -6,7 +6,8 @@ import (
 
 func String(s []byte) []byte {
   if s[0] == '<' {
-    return hex.Decode(string(s[1 : len(s)-1]))
+    r := hex.Decode(string(s[1 : len(s)-1]));
+    return r;
   }
   if s[0] != '(' {
     return []byte{}

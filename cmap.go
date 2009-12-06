@@ -75,7 +75,9 @@ func Decode(s []byte, m []int) []byte {
         p++;
       }
     } else {
-      p += utf8.EncodeRune(m[s[k]], r[p:len(r)])
+      if m[s[k]] != 0 { // FIXME, WRONG ASSUMPTION, for now this fixes some CID-Fonts.
+        p += utf8.EncodeRune(m[s[k]], r[p:len(r)]);
+      }
     }
   }
   return r[0:p];

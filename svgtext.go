@@ -32,6 +32,7 @@ import (
   "io";
   "cmap";
   "unquot";
+  "fancy";
 )
 
 const WIDTH_DENSITY = 10000
@@ -44,6 +45,7 @@ type SvgTextT struct {
   fonts    pdfread.DictionaryT;
   fontw    map[string][]int64;
   x0, x, y string;
+  cmaps    map[string][]int;
 }
 
 func New(pdf *pdfread.PdfReaderT, drw *graf.PdfDrawerT) *SvgTextT {
@@ -52,6 +54,7 @@ func New(pdf *pdfread.PdfReaderT, drw *graf.PdfDrawerT) *SvgTextT {
   r.Drw = drw;
   r.Pdf = pdf;
   r.TSetMatrix(nil);
+  r.cmaps = make(map[string][]int);
   return r;
 }
 
@@ -194,14 +197,39 @@ func (t *SvgTextT) widths(font string) (r []int64) {
 
 var cm_identity = cmap.Read(nil)
 
+func (t *SvgTextT) cmap(font string) (r []int) {
+  var ok bool;
+  if r, ok = t.cmaps[font]; ok {
+    return
+  }
+  r = cm_identity; // setup default
+  if t.fonts == nil {
+    t.fonts = t.Pdf.PageFonts(t.Pdf.Pages()[t.Page]);
+    if t.fonts == nil {
+      return
+    }
+  }
+  if dr, ok := t.fonts[font]; ok {
+    d := t.Pdf.Dic(dr);
+    if tu, ok := d["/ToUnicode"]; ok {
+      _, cm := t.Pdf.DecodedStream(tu);
+      r = cmap.Read(fancy.SliceReader(cm));
+      t.cmaps[font] = r;
+    }
+  }
+  return;
+}
+
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
   w := t.widths(t.Drw.TConfD.Font);
   z := unquot.String(s);
   width := int64(0);
   for k := range z {
-    width += w[z[k]]
+    if z[k] != 0 { // FIXME: WRONG ASSUMPTION, for now this fixes some CID-Fonts.
+      width += w[z[k]]
+    }
   }
-  return cmap.Decode(z, cm_identity), width;
+  return cmap.Decode(z, t.cmap(t.Drw.TConfD.Font)), width;
 }
 
 func (t *SvgTextT) Utf8Advance(s []byte) ([]byte, string) {
@@ -235,7 +263,7 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) {
 func (t *SvgTextT) TShow(a []byte) {
   tx := t.Pdf.ForcedArray(a); // FIXME: Should be "ForcedSimpleArray()"
   for k := range tx {
-    if tx[k][0] == '(' {
+    if tx[k][0] == '(' || tx[k][0] == '<' {
       tmp, adv := t.Utf8Advance(tx[k]);
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"

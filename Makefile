@@ -33,6 +33,7 @@ distclean: clean
 	-rm $(ALL) $(PIGGY)
 
 # -- depends --
+cmap.$O: fancy.$O pdfread.$O strm.$O util.$O
 graf.$O: fancy.$O pdfread.$O strm.$O util.$O
 lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O
@@ -40,4 +41,4 @@ pdstream.$O: pdfread.$O util.$O
 pdtest.$O: pdfread.$O
 pdtosvg.$O: fancy.$O pdfread.$O strm.$O svg.$O svgtext.$O util.$O
 svg.$O: graf.$O strm.$O util.$O
-svgtext.$O: graf.$O pdfread.$O strm.$O util.$O
+svgtext.$O: cmap.$O graf.$O pdfread.$O strm.$O util.$O

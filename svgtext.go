@@ -28,9 +28,9 @@ import (
   "graf";
   "fmt";
   "util";
-  "utf8";
   "strm";
   "io";
+  "cmap";
 )
 
 const WIDTH_DENSITY = 10000
@@ -132,19 +132,6 @@ func FStyle(f string) string {
 
 // ------------------------------------------------
 
-func unquot(a []byte) []byte { // STUB! FIXME!
-  if a[0] != '(' {
-    return a
-  }
-  r := make([]byte, len(a)*6); // or so
-  p := 0;
-  a = a[1 : len(a)-1];
-  for k := 0; k < len(a); k++ {
-    p += utf8.EncodeRune(int(a[k]), r[p:len(r)])
-  }
-  return r[0:p]; // removes braces only.
-}
-
 func (t *SvgTextT) Style(font string) (r string) {
   r = DEFAULT_FSTYLE;
   if t.fonts == nil {
@@ -204,6 +191,8 @@ func (t *SvgTextT) widths(font string) (r []int64) {
   return;
 }
 
+var cm_identity = cmap.Read(nil)
+
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
   w := t.widths(t.Drw.TConfD.Font);
   if s[0] != '(' {
@@ -214,7 +203,7 @@ func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
   for k := range z {
     width += w[z[k]]
   }
-  return unquot(s), width;
+  return cmap.Decode(z, cm_identity), width;
 }
 
 func (t *SvgTextT) Utf8Advance(s []byte) ([]byte, string) {

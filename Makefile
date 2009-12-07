@@ -42,4 +42,4 @@ pdtest.$O: pdfread.$O
 pdtosvg.$O: fancy.$O pdfread.$O strm.$O svg.$O svgtext.$O util.$O
 ps.$O: fancy.$O hex.$O
 svg.$O: graf.$O strm.$O util.$O
-svgtext.$O: cmap.$O fancy.$O graf.$O pdfread.$O ps.$O strm.$O util.$O
+svgtext.$O: cmap.$O cmapt.$O fancy.$O graf.$O pdfread.$O ps.$O strm.$O util.$O

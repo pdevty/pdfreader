@@ -31,6 +31,7 @@ import (
   "strm";
   "io";
   "cmap";
+  "cmapt";
   "fancy";
   "ps";
 )
@@ -44,6 +45,7 @@ type SvgTextT struct {
   matrix   []string;
   fonts    pdfread.DictionaryT;
   fontw    map[string][]int64;
+  fontW    map[string]*cmapt.CMapT;
   x0, x, y string;
   cmaps    map[string][]int;
 }
@@ -153,18 +155,15 @@ func (t *SvgTextT) Style(font string) (r string) {
   return;
 }
 
-func (t *SvgTextT) widths(font string) (r []int64) {
-  if t.fontw == nil {
-    t.fontw = make(map[string][]int64)
-  } else if r, ok := t.fontw[font]; ok {
-    return r
+func (t *SvgTextT) widths(font string) (rW *cmapt.CMapT) {
+  if t.fontW == nil {
+    t.fontW = make(map[string]*cmapt.CMapT)
+  } else if rW, ok := t.fontW[font]; ok {
+    return rW
   }
-  r = make([]int64, 256);
-  t.fontw[font] = r;
   // initialize like for Courier.
-  for k := range r {
-    r[k] = 600 * WIDTH_DENSITY / 1000
-  }
+  rW = cmapt.New();
+  rW.AddDef(0, 256, 600*WIDTH_DENSITY/1000);
   if t.fonts == nil {
     t.fonts = t.Pdf.PageFonts(t.Pdf.Pages()[t.Page]);
     if t.fonts == nil {
@@ -189,7 +188,7 @@ func (t *SvgTextT) widths(font string) (r []int64) {
     q := strm.Int(string(lc), 1);
     a := t.Pdf.Arr(wd);
     for k := p; k < q; k++ {
-      r[k] = strm.Int64(string(a[k-p]), WIDTH_DENSITY/1000)
+      rW.Add(k, strm.Int(string(a[k-p]), WIDTH_DENSITY/1000))
     }
   }
   return;
@@ -221,12 +220,12 @@ func (t *SvgTextT) cmap(font string) (r []int) {
 }
 
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
-  w := t.widths(t.Drw.TConfD.Font);
+  W := t.widths(t.Drw.TConfD.Font);
   z := ps.String(s);
   width := int64(0);
   for k := range z {
     if z[k] != 0 { // FIXME: WRONG ASSUMPTION, for now this fixes some CID-Fonts.
-      width += w[z[k]]
+      width += int64(W.Code(int(z[k])))
     }
   }
   return cmap.Decode(z, t.cmap(t.Drw.TConfD.Font)), width;

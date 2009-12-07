@@ -28,6 +28,7 @@ import (
   "fancy";
   "hex";
   "lzw";
+  "ps";
 )
 
 // limits
@@ -80,135 +81,11 @@ func num(n []byte) (r int) {
   return;
 }
 
-func skipLE(f fancy.Reader) {
-  for {
-    c, err := f.ReadByte();
-    if err != nil {
-      return
-    }
-    if c > 32 {
-      f.UnreadByte();
-      return;
-    }
-    if c == 13 {
-      c, err = f.ReadByte();
-      if err == nil && c != 10 {
-        f.UnreadByte()
-      }
-      return;
-    }
-    if c == 10 {
-      return
-    }
-  }
-}
-
-func skipSpaces(f fancy.Reader) byte {
-  for {
-    c, err := f.ReadByte();
-    if err != nil {
-      break
-    }
-    if c > 32 {
-      return c
-    }
-  }
-  return 0;
-}
-
-func skipToDelim(f fancy.Reader) byte {
-  for {
-    c, err := f.ReadByte();
-    if err != nil {
-      break
-    }
-    if c < 33 {
-      return c
-    }
-    switch c {
-    case '<', '>', '(', ')', '[', ']', '/', '%':
-      return c
-    }
-  }
-  return 255;
-}
-
-func skipString(f fancy.Reader) {
-  for depth := 1; depth > 0; {
-    c, err := f.ReadByte();
-    if err != nil {
-      break
-    }
-    switch c {
-    case '(':
-      depth++
-    case ')':
-      depth--
-    case '\\':
-      f.ReadByte()
-    }
-  }
-}
-
-func skipComment(f fancy.Reader) {
-  for {
-    c, err := f.ReadByte();
-    if err != nil || c == 13 || c == 10 {
-      break
-    }
-  }
-}
-
-func skipComposite(f fancy.Reader) {
-  for depth := 1; depth > 0; {
-    switch skipToDelim(f) {
-    case '<', '[':
-      depth++
-    case '>', ']':
-      depth--
-    case '(':
-      skipString(f)
-    case '%':
-      skipComment(f)
-    }
-  }
-}
-
-func fpos(f fancy.Reader) int64 {
-  r, _ := f.Seek(0, 1);
-  return r;
-}
-
-func SimpleToken(f fancy.Reader) ([]byte, int64) {
-again:
-  c := skipSpaces(f);
-  if c == 0 {
-    return _Bytes, -1
-  }
-  p := fpos(f) - 1;
-  switch c {
-  case '%':
-    skipComment(f);
-    goto again;
-  case '<', '[':
-    skipComposite(f)
-  case '(':
-    skipString(f)
-  default:
-    if skipToDelim(f) != 255 {
-      f.UnreadByte()
-    }
-  }
-  n := int(fpos(f) - p);
-  f.Seek(p, 0);
-  return f.Slice(n), p;
-}
-
 func refToken(f fancy.Reader) ([]byte, int64) {
-  tok, p := SimpleToken(f);
+  tok, p := ps.Token(f);
   if len(tok) > 0 && tok[0] >= '0' && tok[0] <= '9' {
-    SimpleToken(f);
-    r, q := SimpleToken(f);
+    ps.Token(f);
+    r, q := ps.Token(f);
     if string(r) == "R" {
       f.Seek(p, 0);
       tok = f.Slice(int(1 + q - p));
@@ -222,7 +99,7 @@ func refToken(f fancy.Reader) ([]byte, int64) {
 func tupel(f fancy.Reader, count int) [][]byte {
   r := make([][]byte, count);
   for i := 0; i < count; i++ {
-    r[i], _ = SimpleToken(f)
+    r[i], _ = ps.Token(f)
   }
   return r;
 }
@@ -247,21 +124,22 @@ func xrefStart(f fancy.Reader) int {
 // xrefSkip() queries the start of the trailer for a (partial) xref-table.
 func xrefSkip(f fancy.Reader, xref int) int {
   f.Seek(int64(xref), 0);
-  t, p := SimpleToken(f);
+  t, p := ps.Token(f);
   if string(t) != "xref" {
     return -1
   }
   for {
-    t, p = SimpleToken(f);
+    t, p = ps.Token(f);
     if t[0] < '0' || t[0] > '9' {
       f.Seek(p, 0);
       break;
     }
-    t, _ = SimpleToken(f);
-    skipLE(f);
+    t, _ = ps.Token(f);
+    ps.SkipLE(f);
     f.Seek(int64(num(t)*20), 1);
   }
-  return int(fpos(f));
+  r, _ := f.Seek(0, 1);
+  return int(r);
 }
 
 // Dictionary() makes a map/hash from PDF dictionary data.
@@ -276,7 +154,7 @@ func Dictionary(s []byte) DictionaryT {
   r := make(DictionaryT);
   rdr := fancy.SliceReader(s[2 : e-1]);
   for {
-    t, _ := SimpleToken(rdr);
+    t, _ := ps.Token(rdr);
     if len(t) == 0 {
       break
     }
@@ -323,11 +201,11 @@ func xrefRead(f fancy.Reader, p int) map[int]int {
     b++;
     p = xrefSkip(f, p);
     f.Seek(int64(p), 0);
-    s, _ = SimpleToken(f);
+    s, _ = ps.Token(f);
     if string(s) != "trailer" {
       return nil
     }
-    s, _ = SimpleToken(f);
+    s, _ = ps.Token(f);
     s, ok = Dictionary(s)["/Prev"];
     p = num(s);
   }
@@ -335,13 +213,13 @@ func xrefRead(f fancy.Reader, p int) map[int]int {
   for b != 0 {
     b--;
     f.Seek(int64(back[b]), 0);
-    SimpleToken(f); // skip "xref"
+    ps.Token(f); // skip "xref"
     for {
       m := tupel(f, 2);
       if string(m[0]) == "trailer" {
         break
       }
-      skipLE(f);
+      ps.SkipLE(f);
       o := num(m[0]);
       dat := f.Slice(num(m[1]) * 20);
       for i := 0; i < len(dat); i += 20 {
@@ -505,11 +383,11 @@ func (pd *PdfReaderT) Stream(reference []byte) (DictionaryT, []byte) {
   dic := pd.Dic(d);
   l := pd.Num(dic["/Length"]);
   pd.rdr.Seek(int64(q), 0);
-  t, _ := SimpleToken(pd.rdr);
+  t, _ := ps.Token(pd.rdr);
   if string(t) != "stream" {
     return nil, []byte{}
   }
-  skipLE(pd.rdr);
+  ps.SkipLE(pd.rdr);
   return dic, pd.rdr.Slice(l);
 }
 
@@ -575,11 +453,11 @@ func Load(fn string) *PdfReaderT {
     return nil
   }
   r.rdr.Seek(int64(xrefSkip(r.rdr, r.Startxref)), 0);
-  s, _ := SimpleToken(r.rdr);
+  s, _ := ps.Token(r.rdr);
   if string(s) != "trailer" {
     return nil
   }
-  s, _ = SimpleToken(r.rdr);
+  s, _ = ps.Token(r.rdr);
   if r.Trailer = Dictionary(s); r.Trailer == nil {
     return nil
   }

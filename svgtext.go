@@ -31,8 +31,8 @@ import (
   "strm";
   "io";
   "cmap";
-  "unquot";
   "fancy";
+  "ps";
 )
 
 const WIDTH_DENSITY = 10000
@@ -222,7 +222,7 @@ func (t *SvgTextT) cmap(font string) (r []int) {
 
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
   w := t.widths(t.Drw.TConfD.Font);
-  z := unquot.String(s);
+  z := ps.String(s);
   width := int64(0);
   for k := range z {
     if z[k] != 0 { // FIXME: WRONG ASSUMPTION, for now this fixes some CID-Fonts.

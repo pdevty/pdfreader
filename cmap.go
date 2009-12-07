@@ -4,7 +4,7 @@ import (
   "fancy";
   "util";
   "strm";
-  "pdfread";
+  "ps";
   "strconv";
   "utf8";
 )
@@ -36,15 +36,15 @@ func Read(f fancy.Reader) []int {
   }
   c := util.Bytes("0");
   for {
-    t, _ := pdfread.SimpleToken(f);
+    t, _ := ps.Token(f);
     if string(t) == "" {
       break
     }
     if string(t) == "beginbfchar" {
       cc := strm.Int(string(c), 1);
       for k := 0; k < cc; k++ {
-        ch, _ := pdfread.SimpleToken(f);
-        tr, _ := pdfread.SimpleToken(f);
+        ch, _ := ps.Token(f);
+        tr, _ := ps.Token(f);
         ci, _ := strconv.Btoi64(string(ch[1:len(ch)-1]), 16);
         ti, _ := strconv.Btoi64(string(tr[1:len(tr)-1]), 16);
         switch ti {
@@ -76,7 +76,7 @@ func Decode(s []byte, m []int) []byte {
       }
     } else {
       if m[s[k]] != 0 { // FIXME, WRONG ASSUMPTION, for now this fixes some CID-Fonts.
-        p += utf8.EncodeRune(m[s[k]], r[p:len(r)]);
+        p += utf8.EncodeRune(m[s[k]], r[p:len(r)])
       }
     }
   }

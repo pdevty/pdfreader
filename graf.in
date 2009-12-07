@@ -161,7 +161,7 @@ import (
   "util";
   "strm";
   "fancy";
-  "pdfread";
+  "ps";
 )
 
 type DrawerColor interface {
@@ -300,7 +300,7 @@ EMC *          *
 
 func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
   for {
-    t, _ := pdfread.SimpleToken(rdr);
+    t, _ := ps.Token(rdr);
     if len(t) == 0 {
       break
     }

@@ -85,6 +85,8 @@ func (st *StackT) Pop() []byte {
 
 func (st *StackT) Dump() [][]byte { return st.st[0:st.sp] }
 
+func (st *StackT) Depth() int { return st.sp }
+
 func NewStack(n int) *StackT {
   r := new(StackT);
   r.st = make([][]byte, n);
@@ -96,4 +98,5 @@ type Stack interface {
   Pop() []byte;
   Drop(int) (st [][]byte);
   Dump() [][]byte;
+  Depth() int;
 }

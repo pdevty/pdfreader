@@ -1,7 +1,7 @@
 include $(GOROOT)/src/Make.$(GOARCH)
 
 FMT = gofmt -spaces -tabwidth=2
-ALLGO = graf.go
+ALLGO = graf.go cmapi.go
 ALL = $(ALLGO) pdtosvg pdtest pdstream
 PIGGY = *.$O DEADJOE
 
@@ -34,10 +34,11 @@ distclean: clean
 
 # -- depends --
 cmap.$O: fancy.$O ps.$O strm.$O util.$O
+cmapi.$O: cmapt.$O fancy.$O ps.$O util.$O
 graf.$O: fancy.$O ps.$O strm.$O util.$O
 lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O
-pdstream.$O: cmap.$O fancy.$O pdfread.$O util.$O
+pdstream.$O: cmapi.$O fancy.$O pdfread.$O util.$O
 pdtest.$O: pdfread.$O
 pdtosvg.$O: fancy.$O pdfread.$O strm.$O svg.$O svgtext.$O util.$O
 ps.$O: fancy.$O hex.$O

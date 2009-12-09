@@ -203,3 +203,17 @@ func String(s []byte) []byte {
   }
   return r[0:q];
 }
+
+func StrIntL(s []byte) (r, l int) {
+  s = String(s);
+  for k := range s {
+    r <<= 8;
+    r += int(s[k]);
+  }
+  return r, len(s);
+}
+
+func StrInt(s []byte) int {
+  r, _ := StrIntL(s);
+  return r;
+}

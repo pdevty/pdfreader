@@ -23,6 +23,7 @@ THE SOFTWARE.
 
 import (
   "io";
+  "io/ioutil";
   "bufio";
   "os";
 )
@@ -251,7 +252,7 @@ func ReadAndClose(f io.ReadCloser, err os.Error) []byte {
   if err != nil {
     return []byte{}
   }
-  r, _ := io.ReadAll(f);
+  r, _ := ioutil.ReadAll(f);
   f.Close();
   return r;
 }
@@ -269,7 +270,7 @@ func FileReader(fn string) Reader {
 }
 
 func ReadAll(f io.Reader) []byte {
-  r, _ := io.ReadAll(f);
+  r, _ := ioutil.ReadAll(f);
   return r;
 }
 

@@ -29,9 +29,9 @@ import (
   "fmt";
   "util";
   "strm";
-  "io";
-  "cmap";
+  "io/ioutil";
   "cmapt";
+  "cmapi";
   "fancy";
   "ps";
 )
@@ -47,7 +47,7 @@ type SvgTextT struct {
   fontw    map[string][]int64;
   fontW    map[string]*cmapt.CMapT;
   x0, x, y string;
-  cmaps    map[string][]int;
+  cmaps    map[string]*cmapi.CharMapperT;
 }
 
 func New(pdf *pdfread.PdfReaderT, drw *graf.PdfDrawerT) *SvgTextT {
@@ -56,7 +56,7 @@ func New(pdf *pdfread.PdfReaderT, drw *graf.PdfDrawerT) *SvgTextT {
   r.Drw = drw;
   r.Pdf = pdf;
   r.TSetMatrix(nil);
-  r.cmaps = make(map[string][]int);
+  r.cmaps = make(map[string]*cmapi.CharMapperT);
   return r;
 }
 
@@ -95,7 +95,7 @@ func fontnamemap(fn string) int {
     styles = make(map[string]string)
   }
 
-  data, _ := io.ReadFile(fn);
+  data, _ := ioutil.ReadFile(fn);
   no := 0;
   for p := 0; p < len(data); {
     n := string(csvtok(data[p:len(data)]));
@@ -194,9 +194,9 @@ func (t *SvgTextT) widths(font string) (rW *cmapt.CMapT) {
   return;
 }
 
-var cm_identity = cmap.Read(nil)
+var cm_identity = cmapi.Read(nil)
 
-func (t *SvgTextT) cmap(font string) (r []int) {
+func (t *SvgTextT) cmap(font string) (r *cmapi.CharMapperT) {
   var ok bool;
   if r, ok = t.cmaps[font]; ok {
     return
@@ -212,7 +212,7 @@ func (t *SvgTextT) cmap(font string) (r []int) {
     d := t.Pdf.Dic(dr);
     if tu, ok := d["/ToUnicode"]; ok {
       _, cm := t.Pdf.DecodedStream(tu);
-      r = cmap.Read(fancy.SliceReader(cm));
+      r = cmapi.Read(fancy.SliceReader(cm));
       t.cmaps[font] = r;
     }
   }
@@ -228,7 +228,7 @@ func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
       width += int64(W.Code(int(z[k])))
     }
   }
-  return cmap.Decode(z, t.cmap(t.Drw.TConfD.Font)), width;
+  return cmapi.Decode(z, t.cmap(t.Drw.TConfD.Font)), width;
 }
 
 func (t *SvgTextT) Utf8Advance(s []byte) ([]byte, string) {
@@ -262,7 +262,7 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) {
 func (t *SvgTextT) TShow(a []byte) {
   tx := t.Pdf.ForcedArray(a); // FIXME: Should be "ForcedSimpleArray()"
   for k := range tx {
-    if tx[k][0] == '(' || tx[k][0] == '<' {
+   if tx[k][0] == '(' || tx[k][0] == '<' {
       tmp, adv := t.Utf8Advance(tx[k]);
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"
@@ -278,7 +278,7 @@ func (t *SvgTextT) TShow(a []byte) {
         t.Drw.TConfD.FontSize,
         t.Style(t.Drw.TConfD.Font),
         t.Drw.ConfigD.FillColor,
-        tmp);
+        util.ToXML(tmp));
       t.x = strm.Add(t.x, adv);
     } else {
       t.x = strm.Sub(t.x, strm.Mul(string(tx[k]), "0.001"))

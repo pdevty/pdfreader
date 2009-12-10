@@ -100,3 +100,41 @@ type Stack interface {
   Dump() [][]byte;
   Depth() int;
 }
+
+
+func set(o []byte, q string) {
+  for k := range q {
+    o[k] = q[k]
+  }
+}
+
+func ToXML(s []byte) []byte {
+  l := len(s);
+  for k := range s {
+    switch s[k] {
+    case '<', '>':
+      l += 3
+    case '&':
+      l += 4
+    }
+  }
+  r := make([]byte, l);
+  p := 0;
+  for k := range s {
+    switch s[k] {
+    case '<':
+      set(r[p:p+3], "&lt;");
+      p += 4;
+    case '>':
+      set(r[p:p+3], "&gt;");
+      p += 4;
+    case '&':
+      set(r[p:p+4], "&amp;");
+      p += 5;
+    default:
+      r[p] = s[k];
+      p++;
+    }
+  }
+  return r;
+}

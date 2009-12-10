@@ -157,7 +157,7 @@ func String(s []byte) []byte {
     return r;
   }
   if s[0] != '(' {
-    return []byte{}
+    return s
   }
   r := make([]byte, len(s));
   q := 0;
@@ -205,7 +205,6 @@ func String(s []byte) []byte {
 }
 
 func StrIntL(s []byte) (r, l int) {
-  s = String(s);
   for k := range s {
     r <<= 8;
     r += int(s[k]);

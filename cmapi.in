@@ -92,6 +92,7 @@ import (
   "util";
   "cmapt";
   "fancy";
+  "utf8";
 )
 
 type CharMapperT struct {
@@ -151,20 +152,21 @@ func NewInterpreter(t *CharMapperT) *CharMapperI {
 1 usematrix      +
 1 codespacerange +
   +    for k := 0; k < len(a); k += 2 {
-  +      to, l := ps.StrIntL(a[k + 1]);
+  +      to, l := ps.StrIntL(ps.String(a[k + 1]));
   +      t.Target.Ranges.AddDef(int(a[k][0]), int(a[k+1][0]) + 1, l);
-  +      t.Target.Ranges.AddDef(ps.StrInt(a[k]), to + 1, l); // just not used.
+  +      t.Target.Ranges.AddDef(ps.StrInt(ps.String(a[k])), to + 1, l); // just not used.
   +    }
 0 begincmap      -
 0 endcmap        -
 1 bfchar         +
   +    for k := 0; k < len(a); k += 2 {
-  +      t.Target.Uni.Add(ps.StrInt(a[k]), ps.StrInt(a[k+1]));
+  +      t.Target.Uni.Add(ps.StrInt(ps.String(a[k])), ps.StrInt(ps.String(a[k+1])));
   +    }
 1 bfrange        +
   +    for k := 0; k < len(a); k += 3 {
   +      // leaving the array expression as it is: invalidate - we do not have char names to unicode now
-  +      t.Target.Uni.AddRange(ps.StrInt(a[k]), ps.StrInt(a[k+1]), ps.StrInt(a[k+2]));
+  +      t.Target.Uni.AddRange(ps.StrInt(ps.String(a[k])),
+ +         ps.StrInt(ps.String(a[k+1])), ps.StrInt(ps.String(a[k+2])));
   +    }
 1 cidchar        +
 1 cidrange       +
@@ -175,6 +177,11 @@ func NewInterpreter(t *CharMapperT) *CharMapperI {
 
 func Read(rdr fancy.Reader) (r *CharMapperT) {
   r = New();
+  if rdr == nil { // make identity setup
+    r.Uni.AddRange(0, 256, 0);
+    r.Ranges.AddDef(0, 256, 1);
+    return;
+  }
   cm := NewInterpreter(r);
   for {
     t, _ := ps.Token(rdr);
@@ -188,4 +195,16 @@ func Read(rdr fancy.Reader) (r *CharMapperT) {
     }
   }
   return;
+}
+
+func Decode(s []byte, to *CharMapperT) (r []byte) {
+  r = make([]byte, len(s)*6);
+  p := 0;
+  for k := 0; k < len(s); {
+    l := to.Ranges.Code(int(s[k]));
+    a := ps.StrInt(s[k : k+l]);
+    k += l;
+    p += utf8.EncodeRune(to.Uni.Code(a), r[p:len(r)]);
+  }
+  return r[0:p];
 }

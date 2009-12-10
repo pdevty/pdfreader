@@ -22,7 +22,7 @@ func main() {
       for l := range fonts {
         fontname := pd.Dic(fonts[l])["/BaseFont"];
         fmt.Printf("  %s = \"%s\"\n",
-          l, fontname[1:len(fontname)]);
+          l, fontname[1:]);
       }
     }
   }

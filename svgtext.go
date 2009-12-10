@@ -98,13 +98,13 @@ func fontnamemap(fn string) int {
   data, _ := ioutil.ReadFile(fn);
   no := 0;
   for p := 0; p < len(data); {
-    n := string(csvtok(data[p:len(data)]));
+    n := string(csvtok(data[p:]));
     p += len(n) + 1;
-    f := string(csvtok(data[p:len(data)]));
+    f := string(csvtok(data[p:]));
     p += len(f) + 1;
-    s := string(csvtok(data[p:len(data)]));
+    s := string(csvtok(data[p:]));
     p += len(s);
-    p += endcsvl(data[p:len(data)]);
+    p += endcsvl(data[p:]);
     fileNames[n] = f;
     styles[n] = s;
     no++;
@@ -116,7 +116,7 @@ var numFonts = fontnamemap("fontnamemap.txt") // initialize fileNames and styles
 
 func FStyle(f string) string {
   if f[0] == '/' {
-    f = f[1:len(f)]
+    f = f[1:]
   }
   if r, ok := styles[f]; ok {
     return r
@@ -260,7 +260,7 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) {
 func (t *SvgTextT) TShow(a []byte) {
   tx := t.Pdf.ForcedArray(a); // FIXME: Should be "ForcedSimpleArray()"
   for k := range tx {
-    if tx[k][0] == '(' || tx[k][0] == '<' {
+   if tx[k][0] == '(' || tx[k][0] == '<' {
       tmp, adv := t.Utf8Advance(tx[k]);
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"

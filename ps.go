@@ -73,7 +73,7 @@ func skipToDelim(f fancy.Reader) byte {
       return c
     }
     switch c {
-    case '<', '>', '(', ')', '[', ']', '/', '%':
+    case '<', '>', '(', ')', '[', ']', '/', '%', '{', '}':
       return c
     }
   }
@@ -109,9 +109,9 @@ func skipComment(f fancy.Reader) {
 func skipComposite(f fancy.Reader) {
   for depth := 1; depth > 0; {
     switch skipToDelim(f) {
-    case '<', '[':
+    case '<', '[', '{':
       depth++
-    case '>', ']':
+    case '>', ']', '}':
       depth--
     case '(':
       skipString(f)
@@ -137,7 +137,7 @@ again:
   case '%':
     skipComment(f);
     goto again;
-  case '<', '[':
+  case '<', '[', '{':
     skipComposite(f)
   case '(':
     skipString(f)

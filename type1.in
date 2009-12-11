@@ -94,6 +94,7 @@ import (
   "util";
   "fancy";
   "strm";
+  "fmt";
 )
 
 type DicT struct {
@@ -109,16 +110,18 @@ type TypeOneI struct {
   DicNo int;
   Marker int;
   Args [][]byte;
+  Done bool;
 }
 
 func NewInterpreter() *TypeOneI {
   r := new(TypeOneI);
   r.St = util.NewStack(1024);
+  r.Done = false;
   return r;
 }
 
 func (t *TypeOneI) NewDic() (r []byte) {
-  rs := "D" + string(t.DicNo);
+  rs := fmt.Sprintf("D%d", t.DicNo);
   r = util.Bytes(rs);
   t.Dicts[t.DicNo] = new(DicT);
   t.Dicts[t.DicNo].Defs = make(map[string][]byte);
@@ -154,17 +157,23 @@ func (t *TypeOneI) NewDic() (r []byte) {
 2 findresource   -
   +    t.St.Push([]byte{'?'});
   +    _ = a;
+0 currentfile   -
+  +    t.St.Push([]byte{'?'});
 0 readonly       -
+0 noaccess       -
 3 put            -
   +    if a[0][0] == 'D' {
   +      t.Dicts[strm.Int(string(a[0][1:]), 1)].Defs[string(a[1])] = a[2];
   +    } else if a[0][0] == 'A' {
   +    } else { panic("Wrong dictionary or array!\n") }
+1 eexec          -
+  +    t.Done = true; // NONSENSE
+  +    _ = a;
 %%
 
 func Read(rdr fancy.Reader) (r *TypeOneI) {
   r = NewInterpreter();
-  for {
+  for !r.Done {
     t, _ := ps.Token(rdr);
     if len(t) == 0 {
       break

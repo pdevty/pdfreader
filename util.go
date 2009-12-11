@@ -123,13 +123,13 @@ func ToXML(s []byte) []byte {
   for k := range s {
     switch s[k] {
     case '<':
-      set(r[p:p+3], "&lt;");
+      set(r[p:p+4], "&lt;");
       p += 4;
     case '>':
-      set(r[p:p+3], "&gt;");
+      set(r[p:p+4], "&gt;");
       p += 4;
     case '&':
-      set(r[p:p+4], "&amp;");
+      set(r[p:p+5], "&amp;");
       p += 5;
     default:
       r[p] = s[k];

@@ -157,10 +157,12 @@ func t1decrypt(r int, s []byte) []byte {
 
 func eexec(rdr fancy.Reader) []byte {
   ps.SkipLE(rdr);
+  fpos, _ := rdr.Seek(0, 1);
   b := fancy.ReadAll(rdr);
   cnt := 0;
   pos := 0;
-  for k := 0; cnt < 512 && k < len(b); k++ {
+  k := 0;
+  for ; cnt < 512 && k < len(b); k++ {
     switch b[k] {
     case 32,10,13,9:
     case '0':
@@ -171,6 +173,7 @@ func eexec(rdr fancy.Reader) []byte {
     }
   }
   b = b[0:pos];
+  rdr.Seek(fpos+int64(k), 0);
   if hex.IsHex(b[0]) {
     b = hex.Decode(string(b));
   }
@@ -195,8 +198,7 @@ func eexec(rdr fancy.Reader) []byte {
 1 pop            -
 2 exch           -
   +    a0 := a[0];
-  +    a1 := a[1];
-  +    t.St.Push(a1);
+  +    t.St.Push(a[1]);
   +    t.St.Push(a0);
 2 def            -
   +    t.DicSt[t.DicSp].Defs[string(a[0])] = a[1];
@@ -235,15 +237,18 @@ func eexec(rdr fancy.Reader) []byte {
   +    } else { panic("Can not 'get' from!\n") }
 1 eexec          -
   +    b := eexec(t.Rdr);
-  +    fmt.Printf("%s\n\n", b);
+  +    old := t.Rdr;
   +    t.Rdr = fancy.SliceReader(b);
   +    proceed(t, t.Rdr);
+  +    t.Rdr = old;
   +    _ = a;
 1 index          -
   +    t.St.Push(t.St.Index(strm.Int(string(a), 1) + 1));
 2 definefont -
   +    t.St.Push(util.Bytes("<FONT>")); // FIXME, we need this.
   +    _ = a;
+1 cleartomark -
+  +    for string(a) != "mark" { a = t.St.Pop() }
 %%
 
 func find(i *TypeOneI, s string) (r []byte, ok bool) {
@@ -255,17 +260,14 @@ func find(i *TypeOneI, s string) (r []byte, ok bool) {
 
 func proceed(i *TypeOneI, rdr fancy.Reader) {
   for !i.Done {
-    fmt.Printf("STACK: %v\n", util.StringArray(i.St.Dump()));
     t, _ := ps.Token(rdr);
     if len(t) < 1 { break }
     b, _ := rdr.ReadByte();
     if b > 32 { rdr.UnreadByte() }
-    fmt.Printf("--- %s\n", t);
     if len(t) == 0 {
       break
     }
     if d, ok := find(i, "/"+string(t)); ok {
-      fmt.Printf("+++ %s === %s\n", t, d);
       if d[0] == '{' {
         proceed(i, fancy.SliceReader(d[1:len(d)-1]));
       } else {

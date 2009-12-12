@@ -87,9 +87,7 @@ func (st *StackT) Dump() [][]byte { return st.st[0:st.sp] }
 
 func (st *StackT) Depth() int { return st.sp }
 
-func (st *StackT) Index(p int) []byte {
-  return st.st[st.sp - p];
-}
+func (st *StackT) Index(p int) []byte { return st.st[st.sp-p] }
 
 func NewStack(n int) *StackT {
   r := new(StackT);

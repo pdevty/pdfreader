@@ -260,7 +260,7 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) {
 func (t *SvgTextT) TShow(a []byte) {
   tx := t.Pdf.ForcedArray(a); // FIXME: Should be "ForcedSimpleArray()"
   for k := range tx {
-   if tx[k][0] == '(' || tx[k][0] == '<' {
+    if tx[k][0] == '(' || tx[k][0] == '<' {
       tmp, adv := t.Utf8Advance(tx[k]);
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"

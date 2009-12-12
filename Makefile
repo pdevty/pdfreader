@@ -44,4 +44,4 @@ ps.$O: fancy.$O hex.$O
 svg.$O: graf.$O strm.$O util.$O
 svgtext.$O: cmapi.$O cmapt.$O fancy.$O graf.$O pdfread.$O ps.$O strm.$O util.$O
 tt1.$O: fancy.$O type1.$O util.$O
-type1.$O: fancy.$O ps.$O strm.$O util.$O
+type1.$O: fancy.$O hex.$O ps.$O strm.$O util.$O

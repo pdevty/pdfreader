@@ -59,3 +59,7 @@ func Decode(s string) []byte {
   }
   return r[0 : (q+1)/2];
 }
+
+func IsHex(c byte) bool {
+   return deco[c] != 255;
+}

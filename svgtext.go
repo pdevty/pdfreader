@@ -279,7 +279,7 @@ func (t *SvgTextT) TShow(a []byte) {
         util.ToXML(tmp));
       t.x = strm.Add(t.x, adv);
     } else {
-      t.x = strm.Sub(t.x, strm.Mul(string(tx[k]), "0.001"))
+      t.x = strm.Sub(t.x, strm.Mul(string(tx[k]), "0.01"))
     }
   }
 }

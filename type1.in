@@ -156,7 +156,6 @@ func t1decrypt(r int, s []byte) []byte {
 }
 
 func eexec(rdr fancy.Reader) []byte {
-  ps.SkipLE(rdr);
   fpos, _ := rdr.Seek(0, 1);
   b := fancy.ReadAll(rdr);
   cnt := 0;
@@ -213,6 +212,8 @@ func eexec(rdr fancy.Reader) []byte {
 0 currentfile   -
   +    t.St.Push([]byte{'?'});
 1 closefile -
+  +    t.Done = true;
+  +    _ = a;
 0 readonly       -
 0 noaccess       -
 0 executeonly    -
@@ -241,6 +242,7 @@ func eexec(rdr fancy.Reader) []byte {
   +    t.Rdr = fancy.SliceReader(b);
   +    proceed(t, t.Rdr);
   +    t.Rdr = old;
+  +    t.Done = false;
   +    _ = a;
 1 index          -
   +    t.St.Push(t.St.Index(strm.Int(string(a), 1) + 1));
@@ -249,6 +251,9 @@ func eexec(rdr fancy.Reader) []byte {
   +    _ = a;
 1 cleartomark -
   +    for string(a) != "mark" { a = t.St.Pop() }
+4 for -
+  + // FIXME
+  + _ = a;
 %%
 
 func find(i *TypeOneI, s string) (r []byte, ok bool) {

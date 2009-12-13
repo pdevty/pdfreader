@@ -13,8 +13,10 @@ import (
   "fmt";
   "pdfread";
   "util";
-  "cmapi";
-  "fancy";
+  /*
+    "cmapi";
+    "fancy";
+  */
 )
 
 func main() {
@@ -22,6 +24,8 @@ func main() {
   _, d := pd.DecodedStream(util.Bytes(os.Args[2]));
   fmt.Printf("%s", d);
 
-  a := cmapi.Read(fancy.SliceReader(d));
-  fmt.Printf("\n%v\n%v\n%v\n", a, a.Ranges, a.Uni);
+  /*
+    a := cmapi.Read(fancy.SliceReader(d));
+    fmt.Printf("\n%v\n%v\n%v\n", a, a.Ranges, a.Uni);
+  */
 }

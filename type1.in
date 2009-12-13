@@ -106,7 +106,7 @@ type DicT struct {
 type TypeOneI struct {
   Rdr fancy.Reader;
   St util.Stack;
-  DicSt [1024]*DicT;
+  DicSt [64]*DicT;
   DicSp int;
   Dicts [1024]*DicT;
   DicNo int;
@@ -115,6 +115,7 @@ type TypeOneI struct {
   Marker int;
   Args [][]byte;
   Done bool;
+  Fonts map[string]string;
 }
 
 func (t *TypeOneI) NewDic() (r []byte) {
@@ -140,13 +141,14 @@ func NewInterpreter() *TypeOneI {
   r.NewDic();
   r.DicSt[0] = r.Dicts[0];
   r.Done = false;
+  r.Fonts = make(map[string]string);
   return r;
 }
 
-const _EEXEC_KEY = 55665
-const _CHARSTRING_KEY = 4330
+const EEXEC_KEY = 55665
+const CHARSTRING_KEY = 4330
 
-func t1decrypt(r int, s []byte) []byte {
+func T1Decrypt(r int, s []byte) []byte {
   p := make([]byte, len(s));
   for k := range s {
     p[k] = s[k] ^ byte(r >> 8);
@@ -176,7 +178,7 @@ func eexec(rdr fancy.Reader) []byte {
   if hex.IsHex(b[0]) {
     b = hex.Decode(string(b));
   }
-  return t1decrypt(_EEXEC_KEY, b)[4:];
+  return T1Decrypt(EEXEC_KEY, b)[4:];
 }
 
 %%
@@ -247,6 +249,7 @@ func eexec(rdr fancy.Reader) []byte {
 1 index          -
   +    t.St.Push(t.St.Index(strm.Int(string(a), 1) + 1));
 2 definefont -
+  +    t.Fonts[string(a[0])] = string(a[1]);
   +    t.St.Push(util.Bytes("<FONT>")); // FIXME, we need this.
   +    _ = a;
 1 cleartomark -
@@ -292,4 +295,12 @@ func Read(rdr fancy.Reader) (r *TypeOneI) {
   r.Rdr = rdr;
   proceed(r, rdr);
   return;
+}
+
+func (i *TypeOneI) Dic(id string) map[string][]byte {
+  if id[0] != 'D' {
+    panic("Wrong dictionary!\n")
+  }
+  idn := strm.Int(id[1:], 1);
+  return i.Dicts[idn].Defs;
 }

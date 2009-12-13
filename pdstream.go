@@ -14,8 +14,8 @@ import (
   "pdfread";
   "util";
   /*
-    "cmapi";
-    "fancy";
+     "cmapi";
+     "fancy";
   */
 )
 
@@ -25,7 +25,7 @@ func main() {
   fmt.Printf("%s", d);
 
   /*
-    a := cmapi.Read(fancy.SliceReader(d));
-    fmt.Printf("\n%v\n%v\n%v\n", a, a.Ranges, a.Uni);
+     a := cmapi.Read(fancy.SliceReader(d));
+     fmt.Printf("\n%v\n%v\n%v\n", a, a.Ranges, a.Uni);
   */
 }

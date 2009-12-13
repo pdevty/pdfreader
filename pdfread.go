@@ -407,8 +407,10 @@ func (pd *PdfReaderT) DecodedStream(reference []byte) (DictionaryT, []byte) {
         data = fancy.ReadAndClose(zlib.NewInflater(fancy.SliceReader(data)))
       case "/LZWDecode":
         early := true;
-        if s, ok := deco["/EarlyChange"]; ok {
-          early = pd.Num(s) == 1
+        if deco != nil {
+          if s, ok := deco["/EarlyChange"]; ok {
+            early = pd.Num(s) == 1
+          }
         }
         data = lzw.Decode(data, early);
       case "/ASCII85Decode":

@@ -36,7 +36,9 @@ func dumpT1(i *type1.TypeOneI) {
 
 func main() {
   a, _ := ioutil.ReadFile(os.Args[1]);
-  if a[0] == 128 { a = pfb.Decode(a); }
+  if a[0] == 128 {
+    a = pfb.Decode(a)
+  }
   g := type1.Read(fancy.SliceReader(a));
   fmt.Printf("%v\n", util.StringArray(g.St.Dump()));
   dumpT1(g);

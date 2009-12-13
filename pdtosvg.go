@@ -45,13 +45,13 @@ func main() {
   h := strm.Mul(strm.Sub(mbox[3], mbox[1]), "1.25");
 
   fmt.Printf(
-    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"
-      "<svg\n"
-      "   xmlns:svg=\"http://www.w3.org/2000/svg\"\n"
-      "   xmlns=\"http://www.w3.org/2000/svg\"\n"
-      "   version=\"1.0\"\n"
-      "   width=\"%s\"\n"
-      "   height=\"%s\">\n"
+    "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n"+
+      "<svg\n"+
+      "   xmlns:svg=\"http://www.w3.org/2000/svg\"\n"+
+      "   xmlns=\"http://www.w3.org/2000/svg\"\n"+
+      "   version=\"1.0\"\n"+
+      "   width=\"%s\"\n"+
+      "   height=\"%s\">\n"+
       "<g transform=\"matrix(1.25,0,0,-1.25,%s,%s)\">\n",
     w, h,
     strm.Mul(mbox[0], "-1.25"),

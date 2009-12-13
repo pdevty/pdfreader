@@ -105,9 +105,7 @@ func tupel(f fancy.Reader, count int) [][]byte {
 }
 
 var xref = regexp.MustCompile(
-  "startxref[\t ]*(\r?\n|\r)"
-    "[\t ]*([0-9]+)[\t ]*(\r?\n|\r)"
-    "[\t ]*%%EOF")
+  "startxref[\t ]*(\r?\n|\r)[\t ]*([0-9]+)[\t ]*(\r?\n|\r)[\t ]*%%EOF")
 
 // xrefStart() queries the start of the xref-table in a PDF file.
 func xrefStart(f fancy.Reader) int {

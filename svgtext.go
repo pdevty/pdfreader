@@ -263,11 +263,11 @@ func (t *SvgTextT) TShow(a []byte) {
     if tx[k][0] == '(' || tx[k][0] == '<' {
       tmp, adv := t.Utf8Advance(tx[k]);
       fmt.Printf(
-        "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"
-          "<text x=\"%s\" y=\"%s\""
-          " font-size=\"%s\" stroke=\"none\""
-          " style=\"%v\""
-          " fill=\"%s\">%s</text>\n"
+        "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"+
+          "<text x=\"%s\" y=\"%s\""+
+          " font-size=\"%s\" stroke=\"none\""+
+          " style=\"%v\""+
+          " fill=\"%s\">%s</text>\n"+
           "</g>\n",
         t.matrix[0], t.matrix[1],
         strm.Neg(t.matrix[2]), strm.Neg(t.matrix[3]),

@@ -92,7 +92,7 @@ import (
   "util";
   "cmapt";
   "fancy";
-  "utf8";
+  "xchar";
 )
 
 type CharMapperT struct {
@@ -204,7 +204,7 @@ func Decode(s []byte, to *CharMapperT) (r []byte) {
     l := to.Ranges.Code(int(s[k]));
     a := ps.StrInt(s[k : k+l]);
     k += l;
-    p += utf8.EncodeRune(to.Uni.Code(a), r[p:len(r)]);
+    p += xchar.EncodeRune(to.Uni.Code(a), r[p:len(r)]);
   }
   return r[0:p];
 }

@@ -33,7 +33,7 @@ distclean: clean
 	-rm $(ALL) $(PIGGY)
 
 # -- depends --
-cmapi.$O: cmapt.$O fancy.$O ps.$O util.$O
+cmapi.$O: cmapt.$O fancy.$O ps.$O util.$O xchar.$O
 graf.$O: fancy.$O ps.$O strm.$O util.$O
 lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O

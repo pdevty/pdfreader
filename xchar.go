@@ -13,7 +13,7 @@ func Utf8(rune int) []byte {
   up := 3;
   out := make([]byte, up+1);
   if rune < 0 || rune > 0x10FFFF {
-    return []byte{}
+    rune = 0xFFFD;
   }
   uc := 0;
   r := rune;

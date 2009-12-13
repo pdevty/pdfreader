@@ -181,6 +181,16 @@ func eexec(rdr fancy.Reader) []byte {
   return T1Decrypt(EEXEC_KEY, b)[4:];
 }
 
+func (t *TypeOneI) op_ifelse(a [][]byte) {
+  p := a[2];
+  if string(a[0]) == "true" {
+    p = a[1];
+  }
+  if len(p) > 2 && p[0] == '{' {
+    proceed(t, fancy.SliceReader(p[1:len(p)-1]));
+  }
+}
+
 %%
 1 dict           -
   +    t.St.Push(t.NewDic());
@@ -211,7 +221,7 @@ func eexec(rdr fancy.Reader) []byte {
 2 findresource   -
   +    t.St.Push([]byte{'?'});
   +    _ = a;
-0 currentfile   -
+0 currentfile    -
   +    t.St.Push([]byte{'?'});
 1 closefile -
   +    t.Done = true;
@@ -248,15 +258,28 @@ func eexec(rdr fancy.Reader) []byte {
   +    _ = a;
 1 index          -
   +    t.St.Push(t.St.Index(strm.Int(string(a), 1) + 1));
-2 definefont -
+2 definefont     -
   +    t.Fonts[string(a[0])] = string(a[1]);
   +    t.St.Push(util.Bytes("<FONT>")); // FIXME, we need this.
   +    _ = a;
-1 cleartomark -
+1 cleartomark    -
   +    for string(a) != "mark" { a = t.St.Pop() }
-4 for -
-  + // FIXME
-  + _ = a;
+4 for            -
+  +    // FIXME
+  +    _ = a;
+3 ifelse         -
+  +    t.op_ifelse(a);
+2 if             -
+  +    t.op_ifelse([][]byte{a[0], a[1], []byte{}});
+2 known          -
+  +    t.St.Push(util.Bytes("false")); // FIX ME knows nothing ;)
+  +    _ = a;
+0 userdict       -
+  +    t.St.Push(util.Bytes("D0"));
+0 bind           -
+1 where          -
+  +    t.St.Push(util.Bytes("false"));
+  +    _ = a;
 %%
 
 func find(i *TypeOneI, s string) (r []byte, ok bool) {
@@ -269,6 +292,8 @@ func find(i *TypeOneI, s string) (r []byte, ok bool) {
 func proceed(i *TypeOneI, rdr fancy.Reader) {
   for !i.Done {
     t, _ := ps.Token(rdr);
+//    fmt.Printf("Stack: %v\n", util.StringArray(i.St.Dump()));
+//    fmt.Printf("--- %s\n", t);
     if len(t) < 1 { break }
     b, _ := rdr.ReadByte();
     if b > 32 { rdr.UnreadByte() }

@@ -163,7 +163,7 @@ func eexec(rdr fancy.Reader) []byte {
   cnt := 0;
   pos := 0;
   k := 0;
-  for ; cnt < 512 && k < len(b); k++ {
+  for ; cnt < 256 && k < len(b); k++ {
     switch b[k] {
     case 32,10,13,9:
     case '0':

@@ -1,5 +1,4 @@
 package util
-
 /* Some utilities.
 
 Copyright (c) 2009 Helmar Wodtke
@@ -22,6 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
+import "xchar"
+
+var wrongUniCode = xchar.Utf8(-1)
 
 // util.Bytes() is a dup of string.Bytes()
 func Bytes(a string) []byte {
@@ -105,10 +108,11 @@ type Stack interface {
 }
 
 
-func set(o []byte, q string) {
+func set(o []byte, q string) int {
   for k := range q {
     o[k] = q[k]
   }
+  return len(q);
 }
 
 func ToXML(s []byte) []byte {
@@ -119,6 +123,11 @@ func ToXML(s []byte) []byte {
       l += 3
     case '&':
       l += 4
+    case 0, 1, 2, 3, 4, 5, 6, 7, 8,
+      11, 12, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+      31:
+      l += len(wrongUniCode) - 1
     }
   }
   r := make([]byte, l);
@@ -126,17 +135,21 @@ func ToXML(s []byte) []byte {
   for k := range s {
     switch s[k] {
     case '<':
-      set(r[p:p+4], "&lt;");
-      p += 4;
+      p += set(r[p:p+4], "&lt;")
     case '>':
-      set(r[p:p+4], "&gt;");
-      p += 4;
+      p += set(r[p:p+4], "&gt;")
     case '&':
-      set(r[p:p+5], "&amp;");
-      p += 5;
-    default:
+      p += set(r[p:p+5], "&amp;")
+    case 10, 9, 13:
       r[p] = s[k];
       p++;
+    default:
+      if s[k] < 32 {
+        p += copy(r[p:], wrongUniCode)
+      } else {
+        r[p] = s[k];
+        p++;
+      }
     }
   }
   return r;

@@ -265,8 +265,8 @@ func (t *SvgTextT) TShow(a []byte) {
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"+
           "<text x=\"%s\" y=\"%s\""+
-          " font-size=\"%s\" stroke=\"none\""+
-          " style=\"%v\""+
+          " font-size=\"%s\""+
+          " style=\"stroke:none;%v\""+
           " fill=\"%s\">%s</text>\n"+
           "</g>\n",
         t.matrix[0], t.matrix[1],

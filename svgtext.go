@@ -275,7 +275,7 @@ func (t *SvgTextT) TShow(a []byte) {
           "<text x=\"%s\" y=\"%s\""+
           " font-size=\"%s\""+
           " style=\"stroke:none;%v\""+
-          " fill=\"%s\">%s></text>\n"+
+          " fill=\"%s\">%s</text>\n"+
           "</g>\n",
         t.matrix[0], t.matrix[1],
         strm.Neg(t.matrix[2]), strm.Neg(t.matrix[3]),

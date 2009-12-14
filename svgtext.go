@@ -221,12 +221,11 @@ func (t *SvgTextT) cmap(font string) (r *cmapi.CharMapperT) {
 
 func (t *SvgTextT) Utf8TsAdvance(s []byte) ([]byte, int64) {
   W := t.widths(t.Drw.TConfD.Font);
-  z := ps.String(s);
   width := int64(0);
-  for k := range z {
-    width += int64(W.Code(int(z[k])))
+  for k := range s {
+    width += int64(W.Code(int(s[k])))
   }
-  return cmapi.Decode(z, t.cmap(t.Drw.TConfD.Font)), width;
+  return cmapi.Decode(s, t.cmap(t.Drw.TConfD.Font)), width;
 }
 
 func (t *SvgTextT) Utf8Advance(s []byte) ([]byte, string) {
@@ -256,36 +255,65 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) {
   t.y = "0";
 }
 
+func space_split(a []byte) [][]byte {
+  c := 1;
+  for p := 0; p < len(a); {
+    for ; p < len(a) && a[p] == 32; p++ {}
+    for ; p < len(a) && a[p] != 32; p++ {}
+    if p < len(a) - 2 && a[p + 1] == 32 {
+      c++
+    }
+  }
+  r := make([][]byte, c);
+  c = 0;
+  q := 0;
+  for p := 0; p < len(a); {
+    for ; p < len(a) && a[p] == 32; p++ {}
+    for ; p < len(a) && a[p] != 32; p++ {}
+    if p < len(a) - 2 && a[p + 1] == 32 {
+      r[c] = a[q:p];
+      q = p;
+      c++;
+    }
+  }
+  r[c] = a[q:];
+  return r;
+}
 
 func (t *SvgTextT) TShow(a []byte) {
   tx := t.Pdf.ForcedArray(a); // FIXME: Should be "ForcedSimpleArray()"
   for k := range tx {
     if tx[k][0] == '(' || tx[k][0] == '<' {
-      tmp, adv := t.Utf8Advance(tx[k]);
-      res := strm.Add(t.x, adv);
-      p := 0;
-      for len(tmp) > p && tmp[p] == 32 { p++ }
-      if (p > 0) {
-        _, ta := t.Utf8Advance(tmp[0:p]);
-        t.x = strm.Add(t.x, ta);
-        tmp = tmp[p:];
+      part := space_split(ps.String(tx[k]));
+      for y := range part {
+        tmp, adv := t.Utf8Advance(part[y]);
+        res := strm.Add(t.x, adv);
+        p := 0;
+        for len(tmp) > p && tmp[p] == 32 {
+          p++
+        }
+        if p > 0 {
+          _, ta := t.Utf8Advance(tmp[0:p]);
+          t.x = strm.Add(t.x, ta);
+          tmp = tmp[p:];
+        }
+        fmt.Printf(
+          "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"+
+            "<text x=\"%s\" y=\"%s\""+
+            " font-size=\"%s\""+
+            " style=\"stroke:none;%v\""+
+            " fill=\"%s\">%s</text>\n"+
+            "</g>\n",
+          t.matrix[0], t.matrix[1],
+          strm.Neg(t.matrix[2]), strm.Neg(t.matrix[3]),
+          t.matrix[4], t.matrix[5],
+          t.x, t.y,
+          t.Drw.TConfD.FontSize,
+          t.Style(t.Drw.TConfD.Font),
+          t.Drw.ConfigD.FillColor,
+          util.ToXML(tmp));
+        t.x = res;
       }
-      fmt.Printf(
-        "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"+
-          "<text x=\"%s\" y=\"%s\""+
-          " font-size=\"%s\""+
-          " style=\"stroke:none;%v\""+
-          " fill=\"%s\">%s</text>\n"+
-          "</g>\n",
-        t.matrix[0], t.matrix[1],
-        strm.Neg(t.matrix[2]), strm.Neg(t.matrix[3]),
-        t.matrix[4], t.matrix[5],
-        t.x, t.y,
-        t.Drw.TConfD.FontSize,
-        t.Style(t.Drw.TConfD.Font),
-        t.Drw.ConfigD.FillColor,
-        util.ToXML(tmp));
-      t.x = res;
     } else {
       t.x = strm.Sub(t.x, strm.Mul(string(tx[k]), "0.01"))
     }

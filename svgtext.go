@@ -262,12 +262,20 @@ func (t *SvgTextT) TShow(a []byte) {
   for k := range tx {
     if tx[k][0] == '(' || tx[k][0] == '<' {
       tmp, adv := t.Utf8Advance(tx[k]);
+      res := strm.Add(t.x, adv);
+      p := 0;
+      for len(tmp) > p && tmp[p] == 32 { p++ }
+      if (p > 0) {
+        _, ta := t.Utf8Advance(tmp[0:p]);
+        t.x = strm.Add(t.x, ta);
+        tmp = tmp[p:];
+      }
       fmt.Printf(
         "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"+
           "<text x=\"%s\" y=\"%s\""+
           " font-size=\"%s\""+
           " style=\"stroke:none;%v\""+
-          " fill=\"%s\">%s</text>\n"+
+          " fill=\"%s\">%s></text>\n"+
           "</g>\n",
         t.matrix[0], t.matrix[1],
         strm.Neg(t.matrix[2]), strm.Neg(t.matrix[3]),
@@ -277,7 +285,7 @@ func (t *SvgTextT) TShow(a []byte) {
         t.Style(t.Drw.TConfD.Font),
         t.Drw.ConfigD.FillColor,
         util.ToXML(tmp));
-      t.x = strm.Add(t.x, adv);
+      t.x = res;
     } else {
       t.x = strm.Sub(t.x, strm.Mul(string(tx[k]), "0.01"))
     }

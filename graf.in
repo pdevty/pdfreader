@@ -301,7 +301,6 @@ EMC *          *
 func (pd *PdfDrawerT) Interpret(rdr fancy.Reader) {
   for {
     t, _ := ps.Token(rdr);
-//    fmt.Printf("--- %s\n", t);
     if len(t) == 0 {
       break
     }

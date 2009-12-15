@@ -54,19 +54,18 @@ func newLzwDecoder(s []byte, early bool) (lzw *lzwDecoder) {
 
 func (lzw *lzwDecoder) update() bool {
   if lzw.cp < _LZW_DICSIZE-1 {
+    lzw.cp++;
+    cmp := lzw.cp;
     if lzw.early {
-      lzw.cp++
+      cmp++;
     }
-    switch lzw.cp {
+    switch cmp {
     case 512:
       lzw.bc = 10
     case 1024:
       lzw.bc = 11
     case 2048:
       lzw.bc = 12
-    }
-    if !lzw.early {
-      lzw.cp++
     }
     return true;
   }

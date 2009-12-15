@@ -65,6 +65,7 @@ func main() {
 
   test.Interpret(fancy.SliceReader(ps));
   test.Draw.CloseDrawing();
+  fmt.Printf("%s", test.Write.Content);
 
   fmt.Printf("</g>\n</svg>\n");
 

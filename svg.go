@@ -84,30 +84,30 @@ func (s *SvgT) Rectangle(coords [][]byte) {
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  fmt.Printf("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n",
+  s.Parent.Write.Out("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n",
     s.SvgPath(), s.Parent.ConfigD.LineWidth, s.Parent.ConfigD.StrokeColor)
 }
 
 func (s *SvgT) Fill() {
-  fmt.Printf("<%s fill=\"%s\" stroke=\"none\" />\n\n",
+  s.Parent.Write.Out("<%s fill=\"%s\" stroke=\"none\" />\n\n",
     s.SvgPath(), s.Parent.ConfigD.FillColor)
 }
 
-func (s *SvgT) EOFill()          { fmt.Printf("<%s />\n\n", s.SvgPath()) }
-func (s *SvgT) FillAndStroke()   { fmt.Printf("<%s />\n\n", s.SvgPath()) }
-func (s *SvgT) EOFillAndStroke() { fmt.Printf("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) EOFill()          { s.Parent.Write.Out("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) FillAndStroke()   { s.Parent.Write.Out("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) EOFillAndStroke() { s.Parent.Write.Out("<%s />\n\n", s.SvgPath()) }
 func (s *SvgT) Clip()            {}
 func (s *SvgT) EOClip()          {}
 
 func (s *SvgT) Concat(m [][]byte) {
-  fmt.Printf("<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n\n",
+  s.Parent.Write.Out("<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n\n",
     m[0], m[1], m[2], m[3], m[4], m[5]);
   s.groups++;
 }
 
 func (s *SvgT) SetIdentity() {
   for s.groups > 0 {
-    fmt.Printf("</g>\n");
+    s.Parent.Write.Out("</g>\n");
     s.groups--;
   }
 }

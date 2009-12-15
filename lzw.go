@@ -57,7 +57,7 @@ func (lzw *lzwDecoder) update() bool {
     lzw.cp++;
     cmp := lzw.cp;
     if lzw.early {
-      cmp++;
+      cmp++
     }
     switch cmp {
     case 512:

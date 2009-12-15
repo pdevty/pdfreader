@@ -26,7 +26,6 @@ THE SOFTWARE.
 import (
   "pdfread";
   "graf";
-  "fmt";
   "util";
   "strm";
   "io/ioutil";
@@ -41,6 +40,7 @@ const WIDTH_DENSITY = 10000
 type SvgTextT struct {
   Pdf      *pdfread.PdfReaderT;
   Drw      *graf.PdfDrawerT;
+  Write    util.OutT;
   Page     int;
   matrix   []string;
   fonts    pdfread.DictionaryT;
@@ -258,9 +258,11 @@ func (t *SvgTextT) TSetMatrix(s [][]byte) {
 func space_split(a []byte) [][]byte {
   c := 1;
   for p := 0; p < len(a); {
-    for ; p < len(a) && a[p] == 32; p++ {}
-    for ; p < len(a) && a[p] != 32; p++ {}
-    if p < len(a) - 2 && a[p + 1] == 32 {
+    for ; p < len(a) && a[p] == 32; p++ {
+    }
+    for ; p < len(a) && a[p] != 32; p++ {
+    }
+    if p < len(a)-2 && a[p+1] == 32 {
       c++
     }
   }
@@ -268,9 +270,11 @@ func space_split(a []byte) [][]byte {
   c = 0;
   q := 0;
   for p := 0; p < len(a); {
-    for ; p < len(a) && a[p] == 32; p++ {}
-    for ; p < len(a) && a[p] != 32; p++ {}
-    if p < len(a) - 2 && a[p + 1] == 32 {
+    for ; p < len(a) && a[p] == 32; p++ {
+    }
+    for ; p < len(a) && a[p] != 32; p++ {
+    }
+    if p < len(a)-2 && a[p+1] == 32 {
       r[c] = a[q:p];
       q = p;
       c++;
@@ -297,7 +301,7 @@ func (t *SvgTextT) TShow(a []byte) {
           t.x = strm.Add(t.x, ta);
           tmp = tmp[p:];
         }
-        fmt.Printf(
+        t.Drw.Write.Out(
           "<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n"+
             "<text x=\"%s\" y=\"%s\""+
             " font-size=\"%s\""+

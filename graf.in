@@ -32,6 +32,7 @@ my @PdfDrawer = (
   "  CurrentPoint [][]byte;",
   "  ConfigD *DrawerConfigT;",
   "  TConfD *TextConfigT;",
+  "  Write *util.OutT;",
 );
 
 while (<DATA>) {
@@ -327,6 +328,7 @@ func NewPdfDrawer() *PdfDrawerT {
   r.TConfD = new(TextConfigT);
   r.TConf = r.TConfD;
   r.Text = r.TConfD;
+  r.Write = new(util.OutT);
   return r;
 }
 

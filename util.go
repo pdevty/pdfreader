@@ -1,4 +1,7 @@
 package util
+
+import "fmt"
+
 /* Some utilities.
 
 Copyright (c) 2009 Helmar Wodtke
@@ -29,7 +32,7 @@ var wrongUniCode = xchar.Utf8(-1)
 // util.Bytes() is a dup of string.Bytes()
 func Bytes(a string) []byte {
   r := make([]byte, len(a));
-  for k := range a {
+  for k := 0; k < len(a); k++ {
     r[k] = byte(a[k])
   }
   return r;
@@ -109,7 +112,7 @@ type Stack interface {
 
 
 func set(o []byte, q string) int {
-  for k := range q {
+  for k := 0; k < len(q); k++ {
     o[k] = q[k]
   }
   return len(q);
@@ -153,4 +156,22 @@ func ToXML(s []byte) []byte {
     }
   }
   return r;
+}
+
+type OutT struct {
+  Content []byte;
+}
+
+func (t *OutT) Out(f string, args ...) {
+  p := fmt.Sprintf(f, args);
+  q := len(t.Content);
+  if cap(t.Content)-q < len(p) {
+    n := make([]byte, cap(t.Content)+(len(p)/512+2)*512);
+    copy(n, t.Content);
+    t.Content = n[0:q];
+  }
+  t.Content = t.Content[0 : q+len(p)];
+  for k := 0; k < len(p); k++ {
+    t.Content[q+k] = p[k]
+  }
 }

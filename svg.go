@@ -31,7 +31,7 @@ import (
 )
 
 type SvgT struct {
-  Parent *graf.PdfDrawerT;
+  Drw    *graf.PdfDrawerT;
   path   []string;
   p      int;
   groups int;
@@ -84,30 +84,30 @@ func (s *SvgT) Rectangle(coords [][]byte) {
 func (s *SvgT) ClosePath() { s.append("Z") }
 
 func (s *SvgT) Stroke() {
-  s.Parent.Write.Out("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n",
-    s.SvgPath(), s.Parent.ConfigD.LineWidth, s.Parent.ConfigD.StrokeColor)
+  s.Drw.Write.Out("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n\n",
+    s.SvgPath(), s.Drw.ConfigD.LineWidth, s.Drw.ConfigD.StrokeColor)
 }
 
 func (s *SvgT) Fill() {
-  s.Parent.Write.Out("<%s fill=\"%s\" stroke=\"none\" />\n\n",
-    s.SvgPath(), s.Parent.ConfigD.FillColor)
+  s.Drw.Write.Out("<%s fill=\"%s\" stroke=\"none\" />\n\n",
+    s.SvgPath(), s.Drw.ConfigD.FillColor)
 }
 
-func (s *SvgT) EOFill()          { s.Parent.Write.Out("<%s />\n\n", s.SvgPath()) }
-func (s *SvgT) FillAndStroke()   { s.Parent.Write.Out("<%s />\n\n", s.SvgPath()) }
-func (s *SvgT) EOFillAndStroke() { s.Parent.Write.Out("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) EOFill()          { s.Drw.Write.Out("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) FillAndStroke()   { s.Drw.Write.Out("<%s />\n\n", s.SvgPath()) }
+func (s *SvgT) EOFillAndStroke() { s.Drw.Write.Out("<%s />\n\n", s.SvgPath()) }
 func (s *SvgT) Clip()            {}
 func (s *SvgT) EOClip()          {}
 
 func (s *SvgT) Concat(m [][]byte) {
-  s.Parent.Write.Out("<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n\n",
+  s.Drw.Write.Out("<g transform=\"matrix(%s,%s,%s,%s,%s,%s)\">\n\n",
     m[0], m[1], m[2], m[3], m[4], m[5]);
   s.groups++;
 }
 
 func (s *SvgT) SetIdentity() {
   for s.groups > 0 {
-    s.Parent.Write.Out("</g>\n");
+    s.Drw.Write.Out("</g>\n");
     s.groups--;
   }
 }
@@ -167,8 +167,8 @@ func (s *SvgT) RGB(rgb [][]byte) string {
 
 func NewTestSvg() *graf.PdfDrawerT {
   t := new(SvgT);
-  t.Parent = graf.NewPdfDrawer();
-  t.Parent.ConfigD.SetColors(t);
-  t.Parent.Draw = t;
-  return t.Parent;
+  t.Drw = graf.NewPdfDrawer();
+  t.Drw.ConfigD.SetColors(t);
+  t.Drw.Draw = t;
+  return t.Drw;
 }

@@ -40,7 +40,6 @@ const WIDTH_DENSITY = 10000
 type SvgTextT struct {
   Pdf      *pdfread.PdfReaderT;
   Drw      *graf.PdfDrawerT;
-  Write    util.OutT;
   Page     int;
   matrix   []string;
   fonts    pdfread.DictionaryT;

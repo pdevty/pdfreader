@@ -10,7 +10,7 @@ import (
   "pdfread";
   "strm";
   "fancy";
-  "svg";
+  "svgdraw";
   "svgtext";
   "util";
 )
@@ -57,7 +57,7 @@ func main() {
     strm.Mul(mbox[0], "-1.25"),
     strm.Mul(mbox[3], "1.25"));
 
-  test := svg.NewTestSvg();
+  test := svgdraw.NewTestSvg();
   svgtext.New(pd, test).Page = page;
 
   cont := pd.ForcedArray(pd.Dic(pg[page])["/Contents"]);

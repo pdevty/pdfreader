@@ -1,4 +1,4 @@
-package svg
+package svgdraw
 
 /* SVG driver for graf.go.
 

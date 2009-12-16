@@ -43,8 +43,7 @@ type SvgTextT struct {
   Page     int;
   matrix   []string;
   fonts    pdfread.DictionaryT;
-  fontw    map[string][]int64;
-  fontW    map[string]*cmapt.CMapT;
+  fontw    map[string]*cmapt.CMapT;
   x0, x, y string;
   cmaps    map[string]*cmapi.CharMapperT;
 }
@@ -154,15 +153,15 @@ func (t *SvgTextT) Style(font string) (r string) {
   return;
 }
 
-func (t *SvgTextT) widths(font string) (rW *cmapt.CMapT) {
-  if t.fontW == nil {
-    t.fontW = make(map[string]*cmapt.CMapT)
-  } else if rW, ok := t.fontW[font]; ok {
-    return rW
+func (t *SvgTextT) widths(font string) (r *cmapt.CMapT) {
+  if t.fontw == nil {
+    t.fontw = make(map[string]*cmapt.CMapT)
+  } else if r, ok := t.fontw[font]; ok {
+    return r
   }
   // initialize like for Courier.
-  rW = cmapt.New();
-  rW.AddDef(0, 256, 600*WIDTH_DENSITY/1000);
+  r = cmapt.New();
+  r.AddDef(0, 256, 600*WIDTH_DENSITY/1000);
   if t.fonts == nil {
     t.fonts = t.Pdf.PageFonts(t.Pdf.Pages()[t.Page]);
     if t.fonts == nil {
@@ -187,7 +186,7 @@ func (t *SvgTextT) widths(font string) (rW *cmapt.CMapT) {
     q := strm.Int(string(lc), 1);
     a := t.Pdf.Arr(wd);
     for k := p; k < q; k++ {
-      rW.Add(k, strm.Int(string(a[k-p]), WIDTH_DENSITY/1000))
+      r.Add(k, strm.Int(string(a[k-p]), WIDTH_DENSITY/1000))
     }
   }
   return;

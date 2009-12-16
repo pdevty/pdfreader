@@ -39,8 +39,9 @@ lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O
 pdstream.$O: cmapi.$O fancy.$O pdfread.$O util.$O
 pdtest.$O: pdfread.$O
-pdtosvg.$O: fancy.$O pdfread.$O strm.$O svgdraw.$O svgtext.$O util.$O
+pdtosvg.$O: pdfread.$O strm.$O svg.$O
 ps.$O: fancy.$O hex.$O
+svg.$O: fancy.$O pdfread.$O strm.$O svgdraw.$O svgtext.$O util.$O
 svgdraw.$O: graf.$O strm.$O util.$O
 svgtext.$O: cmapi.$O cmapt.$O fancy.$O graf.$O pdfread.$O ps.$O strm.$O util.$O
 tt1.$O: fancy.$O pfb.$O type1.$O util.$O

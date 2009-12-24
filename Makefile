@@ -1,8 +1,13 @@
 include $(GOROOT)/src/Make.$(GOARCH)
 
-FMT = gofmt -spaces -tabwidth=2
+# uncomment next line if you do not like autoimport
+#AUTO = #
+
+FMT = gofmt -spaces -tabwidth=2 -tabindent=false
 ALLGO = graf.go cmapi.go type1.go
-ALL = $(ALLGO) pdtosvg pdtest pdstream tt1 pdserve
+GOFILES = $(wildcard *.go) $(ALLGO)
+ALLTS = $(GOFILES:.go=.ts)
+ALL = $(ALLGO) $(ALLTS) pdtosvg pdtest pdstream tt1 pdserve
 PIGGY = *.$O DEADJOE
 
 all: $(ALL)
@@ -10,27 +15,28 @@ all: $(ALL)
 %: %.$O
 	$(LD) -o $* $*.$O
 
-%.$O: %.go
+%.$O: %.go %.ts
 	$(GC) -I. $*.go
 
 %.go: %.in
-	perl $*.in | $(FMT) >$*.go
+	perl $*.in >$*.go
 
-depend: $(ALLGO)
+%.ts: %.go
+	@make -s $(ALLGO)
+	$(AUTO) ./autoimport $*.go | $(FMT) > $*.new
+	$(AUTO) mv $*.go $*.go~~ && mv $*.new $*.go
+	touch $*.ts
+
+depend: $(ALLGO) $(ALLTS)
 	./mkdepend *.go <Makefile >mkf.new && \
 	mv -f Makefile Makefile~ && \
 	mv -f mkf.new Makefile
-
-fmt:
-	for a in *.go ; do \
-	  $(FMT) $$a >$$a.new && mv $$a $$a~ && mv $$a.new $$a ; \
-	done
 
 clean:
 	-rm *~
 
 distclean: clean
-	-rm $(ALL) $(PIGGY)
+	-rm $(ALL) $(PIGGY) 2>/dev/null
 
 # -- depends --
 cmapi.$O: cmapt.$O fancy.$O ps.$O util.$O xchar.$O
@@ -38,7 +44,7 @@ graf.$O: fancy.$O ps.$O strm.$O util.$O
 lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O
 pdserve.$O: pdfread.$O strm.$O svg.$O
-pdstream.$O: cmapi.$O fancy.$O pdfread.$O util.$O
+pdstream.$O: pdfread.$O util.$O
 pdtest.$O: pdfread.$O
 pdtosvg.$O: pdfread.$O strm.$O svg.$O
 ps.$O: fancy.$O hex.$O

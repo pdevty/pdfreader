@@ -73,7 +73,7 @@ for (sort keys %funcs) {
 }
 print "var Ops = map[string]func (t *TypeOneI) {\n";
 print join(",\n", @funcs);
-print "\n}\n\n";
+print ",\n}\n\n";
 
 while (<DATA>) {
   last if /^%%\s*$/;

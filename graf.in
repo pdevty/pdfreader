@@ -145,7 +145,7 @@ writeInterface;
 print "type PdfDrawerT struct {\n", join("\n", @PdfDrawer), "\n}\n\n";
 
 my $dic = "var PdfOps = map[string]func(pd *PdfDrawerT){\n";
-$dic .= join(",\n", @ops). "\n}\n\n";
+$dic .= join(",\n", @ops). ",\n}\n\n";
 print $dic;
 
 print join('', <DATA>);

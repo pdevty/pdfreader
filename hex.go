@@ -1,6 +1,6 @@
 package hex
 /*
-hex decoder for PDF.
+hex encoder/decoder for PDF.
 
 Copyright (c) 2009 Helmar Wodtke
 
@@ -61,3 +61,16 @@ func Decode(s string) []byte {
 }
 
 func IsHex(c byte) bool { return deco[c] != 255 }
+
+const _hex = "0123456789ABCDEF"
+
+func Encode(i []byte) []byte {
+  r := make([]byte, len(i)*2)
+  for k := range i {
+    r[k*2] = _hex[i[k]>>4]
+    r[k*2+1] = _hex[i[k]&15]
+  }
+  return r
+}
+
+func EncodeLen(i []byte) int { return len(i) * 2 }

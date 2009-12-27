@@ -47,6 +47,7 @@ pdserve.$O: pdfread.$O strm.$O svg.$O
 pdstream.$O: pdfread.$O util.$O
 pdtest.$O: pdfread.$O
 pdtosvg.$O: pdfread.$O strm.$O svg.$O
+pfb.$O: hex.$O
 ps.$O: fancy.$O hex.$O
 svg.$O: fancy.$O pdfread.$O strm.$O svgdraw.$O svgtext.$O util.$O
 svgdraw.$O: graf.$O strm.$O util.$O

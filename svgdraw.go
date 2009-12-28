@@ -127,55 +127,23 @@ func (s *SvgT) SetIdentity() {
 
 func (s *SvgT) CloseDrawing() { s.SetIdentity() }
 
-func percent(c []byte) []byte { // convert 0..1 color lossless to percent
-  r := make([]byte, len(c)+2)
-  p := 0
-  d := -111
-  q := 0
-  for p < len(c) {
-    if d == p-3 {
-      r[q] = '.'
-      q++
-    }
-    if c[p] == '.' {
-      d = p
-    } else {
-      r[q] = c[p]
-      q++
-    }
-    p++
-  }
-  if d == -111 || d == p-1 {
-    r[q] = '0'
-    q++
-    r[q] = '0'
-    q++
-  }
-  if d == p-2 {
-    r[q] = '0'
-    q++
-  }
-  for p = 0; p < q-1 && r[p] == '0'; p++ {
-  }
-  return r[p:q]
-}
 
 func (s *SvgT) Gray(a []byte) string {
-  c := percent(a)
+  c := strm.Percent(a)
   return fmt.Sprintf("rgb(%s%%,%s%%,%s%%)", c, c, c)
 }
 func (s *SvgT) CMYK(cmyk [][]byte) string {
   return fmt.Sprintf("cmyk(%s%%,%s%%,%s%%,%s%%)",
-    percent(cmyk[0]),
-    percent(cmyk[1]),
-    percent(cmyk[2]),
-    percent(cmyk[3]))
+    strm.Percent(cmyk[0]),
+    strm.Percent(cmyk[1]),
+    strm.Percent(cmyk[2]),
+    strm.Percent(cmyk[3]))
 }
 func (s *SvgT) RGB(rgb [][]byte) string {
   return fmt.Sprintf("rgb(%s%%,%s%%,%s%%)",
-    percent(rgb[0]),
-    percent(rgb[1]),
-    percent(rgb[2]))
+    strm.Percent(rgb[0]),
+    strm.Percent(rgb[1]),
+    strm.Percent(rgb[2]))
 }
 
 func NewTestSvg() *graf.PdfDrawerT {

@@ -28,7 +28,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 var wrongUniCode = xchar.Utf8(-1)
 
 // util.Bytes() is a dup of string.Bytes()

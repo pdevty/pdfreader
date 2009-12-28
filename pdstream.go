@@ -14,7 +14,6 @@ import (
 // Example:
 //  ./pdstream.go foo.pdf "9 0 R"
 
-
 func main() {
   pd := pdfread.Load(os.Args[1])
   _, d := pd.DecodedStream(util.Bytes(os.Args[2]))

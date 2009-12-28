@@ -1,6 +1,6 @@
 package hex
 /*
-hex encoder/decoder for PDF.
+hex decoder for PDF.
 
 Copyright (c) 2009 Helmar Wodtke
 

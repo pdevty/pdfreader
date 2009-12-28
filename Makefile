@@ -7,7 +7,7 @@ FMT = gofmt -spaces -tabwidth=2 -tabindent=false
 ALLGO = graf.go cmapi.go type1.go
 GOFILES = $(wildcard *.go) $(ALLGO)
 ALLTS = $(GOFILES:.go=.ts)
-ALL = $(ALLGO) $(ALLTS) pdtosvg pdtest pdstream tt1 pdserve
+ALL = $(ALLGO) $(ALLTS) pdtosvg pdstream tt1 pdserve
 PIGGY = *.$O DEADJOE
 
 all: $(ALL)
@@ -45,7 +45,6 @@ lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O
 pdserve.$O: pdfread.$O strm.$O svg.$O
 pdstream.$O: pdfread.$O util.$O
-pdtest.$O: pdfread.$O
 pdtosvg.$O: pdfread.$O strm.$O svg.$O
 pfb.$O: hex.$O
 ps.$O: fancy.$O hex.$O

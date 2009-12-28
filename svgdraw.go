@@ -3,6 +3,7 @@ package svgdraw
 import (
   "fmt"
   "graf"
+  "stacks"
   "strm"
   "util"
 )
@@ -31,38 +32,28 @@ THE SOFTWARE.
 
 
 type SvgT struct {
-  Drw    *graf.PdfDrawerT
-  path   []string
-  p      int
-  groups int
+  Drw     *graf.PdfDrawerT
+  drwpath stacks.StrStack
+  p       int
+  groups  int
 }
 
 func (s *SvgT) append(p string) {
-  if s.path == nil {
-    s.path = make([]string, 1024)
-    s.p = 0
-  } else if s.p >= len(s.path) {
-    t := make([]string, len(s.path)+1024)
-    s.p = 0
-    for k := range s.path {
-      t[k] = s.path[k]
-      s.p++
-    }
-    s.path = t
+  if s.drwpath == nil {
+    s.drwpath = stacks.NewStrStack(-1)
   }
-  s.path[s.p] = p
-  s.p++
+  s.drwpath.Push(p)
 }
 
 func (s *SvgT) SvgPath() string {
-  if s.path == nil {
+  if s.drwpath.Depth() == 0 {
     return "path d=\"\""
   }
   return fmt.Sprintf("path d=\"%s\"",
-    util.JoinStrings(s.path[0:s.p], ' '))
+    util.JoinStrings(s.drwpath.Dump(), ' '))
 }
 
-func (s *SvgT) DropPath()             { s.path = nil }
+func (s *SvgT) DropPath()             { s.drwpath.Clear() }
 func (s *SvgT) MoveTo(coord [][]byte) { s.append(fmt.Sprintf("M%s %s", coord[0], coord[1])) }
 func (s *SvgT) LineTo(coord [][]byte) { s.append(fmt.Sprintf("L%s %s", coord[0], coord[1])) }
 

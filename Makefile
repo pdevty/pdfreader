@@ -50,7 +50,7 @@ pdtosvg.$O: pdfread.$O strm.$O svg.$O
 pfb.$O: hex.$O
 ps.$O: fancy.$O hex.$O
 svg.$O: fancy.$O pdfread.$O strm.$O svgdraw.$O svgtext.$O util.$O
-svgdraw.$O: graf.$O strm.$O util.$O
+svgdraw.$O: graf.$O stacks.$O strm.$O util.$O
 svgtext.$O: cmapi.$O cmapt.$O fancy.$O graf.$O pdfread.$O ps.$O strm.$O util.$O
 tt1.$O: fancy.$O pfb.$O type1.$O util.$O
 type1.$O: fancy.$O hex.$O ps.$O stacks.$O strm.$O util.$O

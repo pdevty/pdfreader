@@ -40,7 +40,7 @@ func Bytes(a string) []byte {
 }
 
 func JoinStrings(a []string, c byte) []byte {
-  if a == nil {
+  if a == nil || len(a) == 0 {
     return []byte{}
   }
   l := 0

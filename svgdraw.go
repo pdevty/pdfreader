@@ -38,41 +38,35 @@ type SvgT struct {
   groups  int
 }
 
-func (s *SvgT) append(p string) {
-  if s.drwpath == nil {
-    s.drwpath = stacks.NewStrStack(-1)
-  }
-  s.drwpath.Push(p)
-}
-
 func (s *SvgT) SvgPath() string {
-  if s.drwpath.Depth() == 0 {
-    return "path d=\"\""
-  }
   return fmt.Sprintf("path d=\"%s\"",
     util.JoinStrings(s.drwpath.Dump(), ' '))
 }
 
-func (s *SvgT) DropPath()             { s.drwpath.Clear() }
-func (s *SvgT) MoveTo(coord [][]byte) { s.append(fmt.Sprintf("M%s %s", coord[0], coord[1])) }
-func (s *SvgT) LineTo(coord [][]byte) { s.append(fmt.Sprintf("L%s %s", coord[0], coord[1])) }
+func (s *SvgT) DropPath() { s.drwpath.Clear() }
+func (s *SvgT) MoveTo(coord [][]byte) {
+  s.drwpath.Push(fmt.Sprintf("M%s %s", coord[0], coord[1]))
+}
+func (s *SvgT) LineTo(coord [][]byte) {
+  s.drwpath.Push(fmt.Sprintf("L%s %s", coord[0], coord[1]))
+}
 
 func (s *SvgT) CurveTo(coords [][]byte) {
-  s.append(fmt.Sprintf("C%s %s %s %s %s %s",
+  s.drwpath.Push(fmt.Sprintf("C%s %s %s %s %s %s",
     coords[0], coords[1],
     coords[2], coords[3],
     coords[4], coords[5]))
 }
 
 func (s *SvgT) Rectangle(coords [][]byte) {
-  s.append(fmt.Sprintf("M%s %s V%s H%s V%s H%s Z",
+  s.drwpath.Push(fmt.Sprintf("M%s %s V%s H%s V%s H%s Z",
     coords[0], coords[1],
     strm.Add(string(coords[1]), string(coords[3])),
     strm.Add(string(coords[0]), string(coords[2])),
     coords[1], coords[0]))
 }
 
-func (s *SvgT) ClosePath() { s.append("Z") }
+func (s *SvgT) ClosePath() { s.drwpath.Push("Z") }
 
 func (s *SvgT) Stroke() {
   s.Drw.Write.Out("<%s fill=\"none\" stroke-width=\"%s\" stroke=\"%s\" />\n",
@@ -142,5 +136,6 @@ func NewTestSvg() *graf.PdfDrawerT {
   t.Drw = graf.NewPdfDrawer()
   t.Drw.ConfigD.SetColors(t)
   t.Drw.Draw = t
+  t.drwpath = stacks.NewStrStack(-1)
   return t.Drw
 }

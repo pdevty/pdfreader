@@ -62,7 +62,7 @@ func (st *%%ST) Depth() int { return st.sp }
 func (st *%%ST) Index(p int) %%T { return st.st[st.sp-p] }
 func New%%S(n int) *%%ST {
   r := new(%%ST)
-  if r.limit = n < 0; r.limit {
+  if r.limit = n >= 0; !r.limit {
     n = 1024;
   }
   r.st = make([]%%T, n)

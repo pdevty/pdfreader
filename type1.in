@@ -105,7 +105,7 @@ type DicT struct {
 
 type TypeOneI struct {
   Rdr fancy.Reader;
-  St util.Stack;
+  St stacks.Stack;
   DicSt [64]*DicT;
   DicSp int;
   Dicts [1024]*DicT;
@@ -137,7 +137,7 @@ func (t *TypeOneI) NewArray(size int) (r []byte) {
 
 func NewInterpreter() *TypeOneI {
   r := new(TypeOneI);
-  r.St = util.NewStack(1024);
+  r.St = stacks.NewStack(1024);
   r.NewDic();
   r.DicSt[0] = r.Dicts[0];
   r.Done = false;

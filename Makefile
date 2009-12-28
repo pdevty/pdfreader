@@ -4,7 +4,7 @@ include $(GOROOT)/src/Make.$(GOARCH)
 #AUTO = #
 
 FMT = gofmt -spaces -tabwidth=2 -tabindent=false
-ALLGO = graf.go cmapi.go type1.go
+ALLGO = graf.go cmapi.go type1.go stacks.go
 GOFILES = $(wildcard *.go) $(ALLGO)
 ALLTS = $(GOFILES:.go=.ts)
 ALL = $(ALLGO) $(ALLTS) pdtosvg pdstream tt1 pdserve
@@ -39,12 +39,13 @@ distclean: clean
 	-rm $(ALL) $(PIGGY) 2>/dev/null
 
 # -- depends --
-cmapi.$O: cmapt.$O fancy.$O ps.$O util.$O xchar.$O
-graf.$O: fancy.$O ps.$O strm.$O util.$O
+cmapi.$O: cmapt.$O fancy.$O ps.$O stacks.$O xchar.$O
+graf.$O: fancy.$O ps.$O stacks.$O strm.$O util.$O
 lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O
 pdserve.$O: pdfread.$O strm.$O svg.$O
 pdstream.$O: pdfread.$O util.$O
+pdtest.$O: pdfread.$O
 pdtosvg.$O: pdfread.$O strm.$O svg.$O
 pfb.$O: hex.$O
 ps.$O: fancy.$O hex.$O
@@ -52,5 +53,5 @@ svg.$O: fancy.$O pdfread.$O strm.$O svgdraw.$O svgtext.$O util.$O
 svgdraw.$O: graf.$O strm.$O util.$O
 svgtext.$O: cmapi.$O cmapt.$O fancy.$O graf.$O pdfread.$O ps.$O strm.$O util.$O
 tt1.$O: fancy.$O pfb.$O type1.$O util.$O
-type1.$O: fancy.$O hex.$O ps.$O strm.$O util.$O
+type1.$O: fancy.$O hex.$O ps.$O stacks.$O strm.$O util.$O
 util.$O: xchar.$O

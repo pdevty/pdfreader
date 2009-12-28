@@ -68,50 +68,6 @@ func StringArray(i [][]byte) []string {
   return r
 }
 
-// Stacks
-
-type StackT struct {
-  st [][]byte
-  sp int
-}
-
-func (st *StackT) Push(s []byte) {
-  st.st[st.sp] = s
-  st.sp++
-}
-
-func (st *StackT) Drop(n int) [][]byte {
-  st.sp -= n
-  return st.st[st.sp : st.sp+n]
-}
-
-func (st *StackT) Pop() []byte {
-  st.sp--
-  return st.st[st.sp]
-}
-
-func (st *StackT) Dump() [][]byte { return st.st[0:st.sp] }
-
-func (st *StackT) Depth() int { return st.sp }
-
-func (st *StackT) Index(p int) []byte { return st.st[st.sp-p] }
-
-func NewStack(n int) *StackT {
-  r := new(StackT)
-  r.st = make([][]byte, n)
-  return r
-}
-
-type Stack interface {
-  Push([]byte)
-  Pop() []byte
-  Drop(int) (st [][]byte)
-  Dump() [][]byte
-  Depth() int
-  Index(p int) []byte
-}
-
-
 func set(o []byte, q string) int {
   for k := 0; k < len(q); k++ {
     o[k] = q[k]

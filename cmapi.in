@@ -108,7 +108,7 @@ func New() *CharMapperT {
 
 type CharMapperI struct {
   Target *CharMapperT;
-  St util.Stack;
+  St stacks.Stack;
   Dic map[string][]byte;
   Marker int;
   Args [][]byte;
@@ -118,7 +118,7 @@ type CharMapperI struct {
 func NewInterpreter(t *CharMapperT) *CharMapperI {
   r := new(CharMapperI);
   r.Target = t;
-  r.St = util.NewStack(1024);
+  r.St = stacks.NewStack(1024);
   r.Dic = make(map[string][]byte);
   return r;
 }

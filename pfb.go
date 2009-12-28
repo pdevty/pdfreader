@@ -1,10 +1,17 @@
+// Copyright (c) 2009 Helmar Wodtke. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+// The MIT License is an OSI approved license and can
+// be found at
+//   http://www.opensource.org/licenses/mit-license.php
+
+// Decoder for pfb fonts.
 package pfb
 
 import (
   "bytes"
   "hex"
 )
-// Decoder for pfb fonts.
 
 func Decode(b []byte) []byte {
   r := make([]byte, len(b)*2)[0:0]

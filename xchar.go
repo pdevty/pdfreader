@@ -1,6 +1,12 @@
-package xchar
+// Copyright (c) 2009 Helmar Wodtke. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+// The MIT License is an OSI approved license and can
+// be found at
+//   http://www.opensource.org/licenses/mit-license.php
 
-// encode Utf8
+// Encode UTF-8.
+package xchar
 
 var utconv = []int{
   0x7F, 0x00,

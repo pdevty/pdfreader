@@ -1,3 +1,11 @@
+// Copyright (c) 2009 Helmar Wodtke. All rights reserved.
+// Use of this source code is governed by a MIT-style
+// license that can be found in the LICENSE file.
+// The MIT License is an OSI approved license and can
+// be found at
+//   http://www.opensource.org/licenses/mit-license.php
+
+// Example program for pdfread.go
 package main
 
 import (
@@ -6,7 +14,6 @@ import (
   "pdfread"
   "util"
 )
-// Example program for pdfread.go
 
 // The program takes a PDF file and an object reference of a stream.
 // The output are the decoded stream contents.

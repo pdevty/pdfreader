@@ -45,7 +45,6 @@ lzw.$O: crush.$O
 pdfread.$O: fancy.$O hex.$O lzw.$O ps.$O
 pdserve.$O: pdfread.$O strm.$O svg.$O
 pdstream.$O: pdfread.$O util.$O
-pdtest.$O: pdfread.$O
 pdtosvg.$O: pdfread.$O strm.$O svg.$O
 pfb.$O: hex.$O
 ps.$O: fancy.$O hex.$O
